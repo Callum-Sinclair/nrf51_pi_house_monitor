@@ -1,0 +1,24 @@
+Dependencies for Project 'temp_sensor_nrf', Target 'Target 1': (DO NOT MODIFY !)
+F (..\main.c)(0x56BE1986)(-c --cpu Cortex-M0 -D__EVAL -g -O0 --apcs=interwork --split_sections-I S:\nrf_Pi_temp_project\nrf51_pi_house_monitor\nrf_temp_sensor\u_vis_proj\RTE-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include-I C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include-D__UVISION_VERSION="518" -D_RTE_ -DNRF51-o .\objects\main.o --omf_browse .\objects\main.crf --depend .\objects\main.d)
+I (C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\nrf51.h)(0x567185D8)
+I (C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cm0.h)(0x5626197C)
+I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x569E5ABA)
+I (C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cmInstr.h)(0x562605C0)
+I (C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\cmsis_armcc.h)(0x562605C0)
+I (C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cmFunc.h)(0x562605C0)
+I (C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\system_nrf51.h)(0x567185DC)
+I (C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\nrf51_bitfields.h)(0x567185D8)
+F (RTE\Device\nRF51822_xxAC\arm_startup_nrf51.s)(0x567185DC)(--cpu Cortex-M0 --pd "__EVAL SETA 1" -g --apcs=interwork -I S:\nrf_Pi_temp_project\nrf51_pi_house_monitor\nrf_temp_sensor\u_vis_proj\RTE-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include-I C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include--pd "__UVISION_VERSION SETA 518" --pd "_RTE_ SETA 1" --pd "NRF51 SETA 1"--list .\listings\arm_startup_nrf51.lst --xref -o .\objects\arm_startup_nrf51.o --depend .\objects\arm_startup_nrf51.d)
+F (RTE\Device\nRF51822_xxAC\system_nrf51.c)(0x567185DC)(-c --cpu Cortex-M0 -D__EVAL -g -O0 --apcs=interwork --split_sections-I S:\nrf_Pi_temp_project\nrf51_pi_house_monitor\nrf_temp_sensor\u_vis_proj\RTE-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include-I C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include-D__UVISION_VERSION="518" -D_RTE_ -DNRF51-o .\objects\system_nrf51.o --omf_browse .\objects\system_nrf51.crf --depend .\objects\system_nrf51.d)
+I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x569E5ABA)
+I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x569E5ABA)
+I (C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\nrf.h)(0x567185DC)
+I (C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\nrf51.h)(0x567185D8)
+I (C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cm0.h)(0x5626197C)
+I (C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cmInstr.h)(0x562605C0)
+I (C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\cmsis_armcc.h)(0x562605C0)
+I (C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include\core_cmFunc.h)(0x562605C0)
+I (C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\system_nrf51.h)(0x567185DC)
+I (C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\nrf51_bitfields.h)(0x567185D8)
+I (C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\nrf51_deprecated.h)(0x567185DC)
+I (C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\compiler_abstraction.h)(0x567185DC)
