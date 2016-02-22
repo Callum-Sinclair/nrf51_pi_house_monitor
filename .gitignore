@@ -1,0 +1,14 @@
+*/Objects/
+*/Listings/
+*.uvguix.*
+*.uvgui.*
+*.bak
+*.jlink
+*.log
+*.o
+*.d
+*.lib
+*.dep
+JLinkLog.txt
+*/_build/
+*/*/*/*/*/*/_build/
