@@ -128,8 +128,6 @@ int main(void)
     APP_ERROR_CHECK(err_code);
 
 #ifndef ENABLE_LOOPBACK_TEST
-    printf("\n\rStart: \n\r");
-
     uint8_t tx_ch = 0;
     uint8_t rx_ch = 0;
     uint8_t tx_data_num = 0;
@@ -145,6 +143,7 @@ int main(void)
         {
             // indicate
             tx_ch = 'i';
+            tx_data_num = 0;
         }
         else if (rx_ch == 'r' || rx_ch == 'R')
         {
@@ -164,6 +163,11 @@ int main(void)
             {
                 tx_data_num = 0;
             }
+        }
+        else
+        {
+            tx_data_num = 0;
+            tx_ch = 0;
         }
     }
 #else
