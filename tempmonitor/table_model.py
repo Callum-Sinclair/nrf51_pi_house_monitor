@@ -5,7 +5,7 @@ Created on 13 Mar 2016
 
 @author: Tamas Lukacs
 
-@version: 0.1
+@version: 0.2
 '''
 ########################################################################################################################
 #This script contains model for TableView                                                                              #
@@ -18,6 +18,7 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QSortFilterProxyModel, QColor
 
+import resources
 
 class sensorModel(QtCore.QAbstractTableModel):
     """
@@ -82,6 +83,7 @@ class sensorModel(QtCore.QAbstractTableModel):
                 #Do not return the color code text
                 return QtCore.QVariant()
 
+
         #If for dispaying data, return it
         elif role == QtCore.Qt.DisplayRole:
             return data
@@ -141,6 +143,11 @@ class sensorModel(QtCore.QAbstractTableModel):
 
             #Send refreshing signal
             self.dataChanged.emit(index, index)
+
+            #update resources if the ID column is changed
+            if column == 1:
+                resources.deviceNames[row] = str(value.toString())
+
             #Return success
             return True
 
@@ -213,7 +220,7 @@ class sensorModel(QtCore.QAbstractTableModel):
 
     def insertColumns(self, position, columns, parent = QtCore.QModelIndex()):
         '''
-        Method used to insert an entire column into the model - not used in ACES
+        Method used to insert an entire column into the model - not used in this project
         This is jsut to override default method and showcase how to do it
         '''
         #Start indicator for inserting process to start
@@ -260,7 +267,7 @@ class sensorModel(QtCore.QAbstractTableModel):
 class mySortFilterProxy(QSortFilterProxyModel):
     '''
     Class used to enable overriding QSortFilterProxyModel's default lessThan() method
-    in order to prevent thespecial row to be ordered
+    in order to prevent the special row to be ordered - NOT USED IN THIS PROJECT
     Overcome problem by implementing rowtype where rowtype with the value "special" is always
     put at the bottom
     '''
