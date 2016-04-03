@@ -57,7 +57,7 @@ deviceNames = ["default0","default1","default2","default3","default4",
 
 #switches
 feedback = False
-onPi = False
+onPi = True
 busy = False
 
 ########################################################################################################################

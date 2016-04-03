@@ -47,14 +47,14 @@ class bgThread(QtCore.QThread):
 
         #init uart connection if run on RPI
         if (resources.onPi):
-            ser_handle = initSerial(9600)
+            self.ser_handle = initSerial(9600)
 
 
         while (1):
 
             #get UART data if on RPI, otherwise get fake random data
             if (resources.onPi):
-                data = self.getRealTempData(ser_handle)
+                data = self.getRealTempData(self.ser_handle)
             else:
                 data = self.getFakeTempData()
 
@@ -176,7 +176,6 @@ class bgThread(QtCore.QThread):
             hex = ( message[j] + message[j+1])
             num = int(hex,16)-70
             converted.append(num)
-        print converted
         return converted
 
 
