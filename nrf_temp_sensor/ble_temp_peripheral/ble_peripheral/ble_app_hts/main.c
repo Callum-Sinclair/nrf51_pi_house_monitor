@@ -22,6 +22,12 @@
  * This application uses the @ref srvlib_conn_params module.
  */
 
+//change so using timer not button press for update
+//replace sensorsim with actual sensor
+//calibrate sensor
+//add unique id
+//implement "indicate"
+
 #include <stdint.h>
 #include <string.h>
 #include "nordic_common.h"
