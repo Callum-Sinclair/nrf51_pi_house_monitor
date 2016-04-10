@@ -55,7 +55,7 @@
 #include "bsp.h"
 #include "bsp_btn_ble.h"
 #include "ble.h"
-#include "app_uart.h"
+//#include "app_uart.h"
 #include "ble_advdata.h"
 #include "ble_advertising.h"
 #include "ble_conn_params.h"
@@ -68,14 +68,14 @@
 #include "nrf_log.h"
 #include "fstorage.h"
 
-#include "fds.h"
+
 
 #define CENTRAL_LINK_COUNT          2                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT       1                                  /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
-#define APPL_LOG                    app_trace_log                      /**< Macro used to log debug information over UART. */
-#define UART_TX_BUF_SIZE            256                                /**< Size of the UART TX buffer, in bytes. Must be a power of two. */
-#define UART_RX_BUF_SIZE            1                                  /**< Size of the UART RX buffer, in bytes. Must be a power of two. */
+//#define APPL_LOG                    app_trace_log                      /**< Macro used to log debug information over UART. */
+//#define UART_TX_BUF_SIZE            256                                /**< Size of the UART TX buffer, in bytes. Must be a power of two. */
+//#define UART_RX_BUF_SIZE            1                                  /**< Size of the UART RX buffer, in bytes. Must be a power of two. */
 
 /* Central related. */
 
@@ -184,20 +184,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
 
-
-void uart_error_handle(app_uart_evt_t * p_event)
-{
-    if (p_event->evt_type == APP_UART_COMMUNICATION_ERROR)
-    {
-        APP_ERROR_HANDLER(p_event->data.error_communication);
-    }
-    else if (p_event->evt_type == APP_UART_FIFO_ERROR)
-    {
-        APP_ERROR_HANDLER(p_event->data.error_code);
-    }
-}
-
-
 /**@brief Function for handling errors from the Connection Parameters module.
  *
  * @param[in] nrf_error  Error code containing information about what went wrong.
@@ -261,19 +247,6 @@ static void scan_start(void)
 }
 
 
-/**@brief Function for handling File Data Storage events.
- *
- * @param[in] p_evt  Peer Manager event.
- * @param[in] cmd
- */
-static void fds_evt_handler(fds_evt_t const * const p_evt)
-{
-    if (p_evt->id == FDS_EVT_GC)
-    {
-        NRF_LOG_PRINTF("GC completed\n");
-    }
-}
-
 
 /**@brief Function for handling Peer Manager events.
  *
@@ -289,10 +262,6 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
             break;
 
         case PM_EVT_LINK_SECURED:
-            NRF_LOG_PRINTF("Link secured. Role: %d. conn_handle: %d, Procedure: %d\r\n",
-                           ble_conn_state_role(p_evt->conn_handle),
-                           p_evt->conn_handle,
-                           p_evt->params.link_secured_evt.procedure);
             break;
 
         case PM_EVT_LINK_SECURE_FAILED:
@@ -319,11 +288,6 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 
         case PM_EVT_STORAGE_FULL:
             // Run garbage collection on the flash.
-            err_code = fds_gc();
-            if (err_code != NRF_ERROR_BUSY)
-            {
-                APP_ERROR_CHECK(err_code);
-            }
             break;
 
         case PM_EVT_ERROR_UNEXPECTED:
@@ -362,8 +326,6 @@ static void hrs_c_evt_handler(ble_hrs_c_t * p_hrs_c, ble_hrs_c_evt_t * p_hrs_c_e
         {
             ret_code_t err_code;
 
-            NRF_LOG_PRINTF("Heart rate service discovered\r\n");
-
             // Initiate bonding.
             err_code = pm_link_secure(p_hrs_c->conn_handle, false);
             if (err_code != NRF_ERROR_INVALID_STATE)
@@ -379,8 +341,6 @@ static void hrs_c_evt_handler(ble_hrs_c_t * p_hrs_c, ble_hrs_c_evt_t * p_hrs_c_e
         case BLE_HRS_C_EVT_HRM_NOTIFICATION:
         {
             ret_code_t err_code;
-
-            NRF_LOG_PRINTF("Heart Rate = %d\r\n", p_hrs_c_evt->params.hrm.hr_value);
 
             err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, p_hrs_c_evt->params.hrm.hr_value);
             if ((err_code != NRF_SUCCESS) &&
@@ -410,8 +370,6 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
         {
             ret_code_t err_code;
 
-            NRF_LOG_PRINTF("Running Speed and Cadence service discovered\r\n");
-
             // Initiate bonding.
             err_code = pm_link_secure(p_rscs_c->conn_handle, false);
             if (err_code != NRF_ERROR_INVALID_STATE)
@@ -428,8 +386,6 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
         {
             uint32_t        err_code;
             ble_rscs_meas_t rscs_measurment;
-
-            NRF_LOG_PRINTF("Speed      = %d\r\n", p_rscs_c_evt->params.rsc.inst_speed);
 
             rscs_measurment.is_running                  = p_rscs_c_evt->params.rsc.is_running;
             rscs_measurment.is_inst_stride_len_present  = p_rscs_c_evt->params.rsc.is_inst_stride_len_present;
@@ -495,25 +451,21 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
              *  upon completion, which is used to enable notifications from the peer. */
             if(memcmp(&periph_addr_hrs, peer_addr, sizeof(ble_gap_addr_t)) == 0)
             {
-                NRF_LOG_PRINTF("HRS central connected\r\n");
                 // Reset the peer address we had saved.
                 memset(&periph_addr_hrs, 0, sizeof(ble_gap_addr_t));
 
                 m_conn_handle_hrs_c = p_gap_evt->conn_handle;
 
-                NRF_LOG_PRINTF("Starting DB discovery for HRS\r\n");
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_hrs, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
             }
             else if(memcmp(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t)) == 0)
             {
-                NRF_LOG_PRINTF("RSC central connected\r\n");
                 // Reset the peer address we had saved.
                 memset(&periph_addr_rsc, 0, sizeof(ble_gap_addr_t));
 
                 m_conn_handle_rscs_c = p_gap_evt->conn_handle;
 
-                NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
             }
@@ -541,16 +493,10 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 
             if (p_gap_evt->conn_handle == m_conn_handle_hrs_c)
             {
-                NRF_LOG_PRINTF("HRS central disconnected (reason: %d)\r\n",
-                       p_gap_evt->params.disconnected.reason);
-
                 m_conn_handle_hrs_c = BLE_CONN_HANDLE_INVALID;
             }
             else if(p_gap_evt->conn_handle == m_conn_handle_rscs_c)
             {
-                NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
-                       p_gap_evt->params.disconnected.reason);
-
                 m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;
             }
 
@@ -627,21 +573,12 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 {
                     // Initiate connection.
                     err_code = sd_ble_gap_connect(peer_addr, &m_scan_param, &m_connection_param);
-                    if (err_code != NRF_SUCCESS)
-                    {
-                        APPL_LOG("[APPL]: Connection Request Failed, reason %d\r\n", err_code);
-                    }
                 }
             }
         } break; // BLE_GAP_ADV_REPORT
 
         case BLE_GAP_EVT_TIMEOUT:
         {
-            // We have not specified a timeout for scanning, so only connection attemps can timeout.
-            if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
-            {
-                APPL_LOG("[APPL]: Connection Request timed out.\r\n");
-            }
         } break; // BLE_GAP_EVT_TIMEOUT
 
         case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
@@ -670,13 +607,11 @@ static void on_ble_peripheral_evt(ble_evt_t * p_ble_evt)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
-            NRF_LOG_PRINTF("Peripheral connected\r\n");
             LEDS_OFF(PERIPHERAL_ADVERTISING_LED);
             LEDS_ON(PERIPHERAL_CONNECTED_LED);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
-            NRF_LOG_PRINTF("Peripheral disconnected\r\n");
             LEDS_OFF(PERIPHERAL_CONNECTED_LED);
             break;
 
@@ -892,9 +827,6 @@ static void peer_manager_init(bool erase_bonds)
 
     err_code = pm_register(pm_evt_handler);
     APP_ERROR_CHECK(err_code);
-
-    err_code = fds_register(fds_evt_handler);
-    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -1076,15 +1008,8 @@ int main(void)
     err_code = NRF_LOG_INIT();
     APP_ERROR_CHECK(err_code);
 
-    NRF_LOG_PRINTF("Relay Example\r\n");
-
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, NULL);
     buttons_leds_init(&erase_bonds);
-
-    if (erase_bonds == true)
-    {
-        NRF_LOG("Bonds erased!\r\n");
-    }
 
     ble_stack_init();
 
