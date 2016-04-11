@@ -146,8 +146,8 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 #define PERIPHERAL_ADVERTISING_LED       BSP_LED_2_MASK
 #define PERIPHERAL_CONNECTED_LED         BSP_LED_3_MASK
 
-#define DEVICE_NAME                      "MultiTemp"                                /**< Name of device used for advertising. */
-#define MANUFACTURER_NAME                "CallumSinclair"                           /**< Manufacturer. Will be passed to Device Information Service. */
+#define DEVICE_NAME                      "Multi"                                /**< Name of device used for advertising. */
+#define MANUFACTURER_NAME                "CallumS"                           /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                 300                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 25 ms. */
 #define APP_ADV_TIMEOUT_IN_SECONDS       180                                        /**< The advertising timeout in units of seconds. */
 
@@ -339,7 +339,7 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 
 /**@brief Handles events coming from  Running Speed and Cadence central module.
  */
-static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rscs_c_evt)
+/*static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rscs_c_evt)
 {
     switch (p_rscs_c_evt->evt_type)
     {
@@ -394,7 +394,63 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
             // No implementation needed.
             break;
     }
+}*/
+static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rscs_c_evt)
+{
+    rb_led_on();
+    switch (p_rscs_c_evt->evt_type)
+    {
+        case BLE_RSCS_C_EVT_DISCOVERY_COMPLETE:
+        {
+            ret_code_t err_code;
+
+            //NRF_LOG_PRINTF("Running Speed and Cadence service discovered\r\n");
+
+            // Initiate bonding.
+            err_code = pm_link_secure(p_rscs_c->conn_handle, false);
+            if (err_code != NRF_ERROR_INVALID_STATE)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+
+            // Running speed cadence service discovered. Enable notifications.
+            err_code = ble_rscs_c_rsc_notif_enable(p_rscs_c);
+            APP_ERROR_CHECK(err_code);
+        } break; // BLE_RSCS_C_EVT_DISCOVERY_COMPLETE:
+
+        case BLE_RSCS_C_EVT_RSC_NOTIFICATION:
+        {
+            uint32_t        err_code;
+            ble_rscs_meas_t rscs_measurment;
+
+           // NRF_LOG_PRINTF("Speed      = %d\r\n", p_rscs_c_evt->params.rsc.inst_speed);
+
+            rscs_measurment.is_running                  = p_rscs_c_evt->params.rsc.is_running;
+            rscs_measurment.is_inst_stride_len_present  = p_rscs_c_evt->params.rsc.is_inst_stride_len_present;
+            rscs_measurment.is_total_distance_present   = p_rscs_c_evt->params.rsc.is_total_distance_present;
+
+            rscs_measurment.inst_stride_length = p_rscs_c_evt->params.rsc.inst_stride_length;
+            rscs_measurment.inst_cadence       = p_rscs_c_evt->params.rsc.inst_cadence;
+            rscs_measurment.inst_speed         = p_rscs_c_evt->params.rsc.inst_speed;
+            rscs_measurment.total_distance     = p_rscs_c_evt->params.rsc.total_distance;
+
+            err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurment);
+            if ((err_code != NRF_SUCCESS) &&
+                (err_code != NRF_ERROR_INVALID_STATE) &&
+                (err_code != BLE_ERROR_NO_TX_PACKETS) &&
+                (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+                )
+            {
+                APP_ERROR_HANDLER(err_code);
+            }
+        } break; // BLE_RSCS_C_EVT_RSC_NOTIFICATION
+
+        default:
+            // No implementation needed.
+            break;
+    }
 }
+
 
 
 /**@brief Function for handling BLE Stack events concerning central applications.
@@ -411,6 +467,7 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
  */
 static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 {
+
     static ble_gap_addr_t periph_addr_rsc;
     // For readability.
     const ble_gap_evt_t   * const p_gap_evt = &p_ble_evt->evt.gap_evt;
@@ -421,7 +478,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
          *  discovery, update LEDs status and resume scanning if necessary. */
         case BLE_GAP_EVT_CONNECTED:
         {
-            //rb_led_on();
+            rb_led_on();
             uint32_t err_code;
 
 
@@ -503,7 +560,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                     
                     // Initiate connection.
                     err_code = sd_ble_gap_connect(peer_addr, &m_scan_param, &m_connection_param);
-                    
+                    //rb_led_on();
                 }
             }
         } break; // BLE_GAP_ADV_REPORT
