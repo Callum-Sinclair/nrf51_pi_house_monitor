@@ -66,14 +66,14 @@
 
 #define SEND_MEAS_BUTTON_ID             0                                          /**< Button used for sending a measurement. */
 
-#define DEVICE_NAME                     "Nordic_HTS"                               /**< Name of device. Will be included in the advertising data. */
-#define MANUFACTURER_NAME               "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
-#define MODEL_NUM                       "NS-HTS-EXAMPLE"                           /**< Model number. Will be passed to Device Information Service. */
-#define MANUFACTURER_ID                 0x1122334455                               /**< Manufacturer ID, part of System ID. Will be passed to Device Information Service. */
-#define ORG_UNIQUE_ID                   0x667788                                   /**< Organizational Unique ID, part of System ID. Will be passed to Device Information Service. */
+#define DEVICE_NAME                     "bob"                      /**< Name of device. Will be included in the advertising data. */
+#define MANUFACTURER_NAME               "aterd"                       /**< Manufacturer. Will be passed to Device Information Service. */
+#define MODEL_NUM                       "fe-HTS-da"                           /**< Model number. Will be passed to Device Information Service. */
+#define MANUFACTURER_ID                 0x1234567890                               /**< Manufacturer ID, part of System ID. Will be passed to Device Information Service. */
+#define ORG_UNIQUE_ID                   0x998877                                   /**< Organizational Unique ID, part of System ID. Will be passed to Device Information Service. */
 
 #define APP_ADV_INTERVAL                40                                         /**< The advertising interval (in units of 0.625 ms. This value corresponds to 25 ms). */
-#define APP_ADV_TIMEOUT_IN_SECONDS      180                                        /**< The advertising timeout in units of seconds. */
+#define APP_ADV_TIMEOUT_IN_SECONDS      300                                        /**< The advertising timeout in units of seconds. */
 
 #define APP_TIMER_PRESCALER             0                                          /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE         4                                          /**< Size of timer operation queues. */
@@ -82,6 +82,8 @@
 #define MIN_BATTERY_LEVEL               81                                         /**< Minimum battery level as returned by the simulated measurement function. */
 #define MAX_BATTERY_LEVEL               100                                        /**< Maximum battery level as returned by the simulated measurement function. */
 #define BATTERY_LEVEL_INCREMENT         1                                          /**< Value by which the battery level is incremented/decremented for each call to the simulated measurement function. */
+
+#define TEMP_MEAS_INTERVAL              2000                                        /**< temparature measurement interval (milliseconds). */
 
 #define TEMP_TYPE_AS_CHARACTERISTIC     0                                          /**< Determines if temperature type is given as characteristic (1) or as a field of measurement (0). */
 
@@ -120,6 +122,7 @@ static sensorsim_cfg_t                  m_temp_celcius_sim_cfg;                 
 static sensorsim_state_t                m_temp_celcius_sim_state;                  /**< Temperature simulator state. */
 
 APP_TIMER_DEF(m_battery_timer_id);                                                 /**< Battery timer. */
+APP_TIMER_DEF(m_temp_meas_timer_id);                                                /**< temparature measurement timer. */
 static dm_application_instance_t        m_app_handle;                              /**< Application identifier allocated by device manager */
 
 static    ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEALTH_THERMOMETER_SERVICE, BLE_UUID_TYPE_BLE},
@@ -188,7 +191,7 @@ static void hts_sim_measurement(ble_hts_meas_t * p_meas)
     uint32_t celciusX100;
 
     p_meas->temp_in_fahr_units = false;
-    p_meas->time_stamp_present = true;
+    p_meas->time_stamp_present = false;
     p_meas->temp_type_present  = (TEMP_TYPE_AS_CHARACTERISTIC ? false : true);
 
     celciusX100 = sensorsim_measure(&m_temp_celcius_sim_state, &m_temp_celcius_sim_cfg);
@@ -213,6 +216,49 @@ static void hts_sim_measurement(ble_hts_meas_t * p_meas)
     }
 }
 
+/**@brief Function for simulating and sending one Temperature Measurement.
+ */
+static void temperature_measurement_send(void)
+{
+    ble_hts_meas_t simulated_meas;
+    uint32_t       err_code;
+
+    if (!m_hts_meas_ind_conf_pending)
+    {
+        hts_sim_measurement(&simulated_meas);
+
+        err_code = ble_hts_measurement_send(&m_hts, &simulated_meas);
+
+        switch (err_code)
+        {
+            case NRF_SUCCESS:
+                // Measurement was successfully sent, wait for confirmation.
+                m_hts_meas_ind_conf_pending = true;
+                break;
+
+            case NRF_ERROR_INVALID_STATE:
+                // Ignore error.
+                break;
+
+            default:
+                APP_ERROR_HANDLER(err_code);
+                break;
+        }
+    }
+}
+
+/**@brief Function for handling the Battery measurement timer timeout.
+ *
+ * @details This function will be called each time the battery level measurement timer expires.
+ *
+ * @param[in] p_context   Pointer used for passing some arbitrary information (context) from the
+ *                        app_start_timer() call to the timeout handler.
+ */
+static void temp_meas_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+    temperature_measurement_send();
+}
 
 /**@brief Function for the Timer initialization.
  *
@@ -229,6 +275,12 @@ static void timers_init(void)
     err_code = app_timer_create(&m_battery_timer_id,
                                 APP_TIMER_MODE_REPEATED,
                                 battery_level_meas_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+    
+    // Create battery timer.
+    err_code = app_timer_create(&m_temp_meas_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                temp_meas_timeout_handler);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -265,37 +317,6 @@ static void gap_params_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-
-/**@brief Function for simulating and sending one Temperature Measurement.
- */
-static void temperature_measurement_send(void)
-{
-    ble_hts_meas_t simulated_meas;
-    uint32_t       err_code;
-
-    if (!m_hts_meas_ind_conf_pending)
-    {
-        hts_sim_measurement(&simulated_meas);
-
-        err_code = ble_hts_measurement_send(&m_hts, &simulated_meas);
-
-        switch (err_code)
-        {
-            case NRF_SUCCESS:
-                // Measurement was successfully sent, wait for confirmation.
-                m_hts_meas_ind_conf_pending = true;
-                break;
-
-            case NRF_ERROR_INVALID_STATE:
-                // Ignore error.
-                break;
-
-            default:
-                APP_ERROR_HANDLER(err_code);
-                break;
-        }
-    }
-}
 
 
 /**@brief Function for handling the Health Thermometer Service events.
@@ -419,9 +440,15 @@ static void sensor_simulator_init(void)
 static void application_timers_start(void)
 {
     uint32_t err_code;
-
+    uint32_t temp_meas_timer_ticks;
+    
     // Start application timers.
     err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
+    
+    temp_meas_timer_ticks = APP_TIMER_TICKS(TEMP_MEAS_INTERVAL, APP_TIMER_PRESCALER);
+
+    err_code = app_timer_start(m_temp_meas_timer_id, temp_meas_timer_ticks, NULL);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -661,10 +688,6 @@ static void bsp_event_handler(bsp_event_t event)
             break;
 
         case BSP_EVENT_KEY_0:
-            if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
-            {
-                temperature_measurement_send();
-            }
             break;
 
         default:

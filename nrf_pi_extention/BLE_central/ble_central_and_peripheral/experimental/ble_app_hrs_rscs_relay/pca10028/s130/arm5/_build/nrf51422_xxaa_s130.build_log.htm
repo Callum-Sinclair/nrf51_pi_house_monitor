@@ -29,7 +29,7 @@ Project File Date:  12/18/2015
 Build target 'nrf51422_xxaa_s130'
 compiling main.c...
 linking...
-Program Size: Code=31016 RO-data=524 RW-data=380 ZI-data=5932  
+Program Size: Code=29452 RO-data=524 RW-data=356 ZI-data=5620  
 FromELF: creating hex file...
 ".\_build\nrf51422_xxaa_s130.axf" - 0 Error(s), 0 Warning(s).
 
@@ -43,8 +43,9 @@ Package Vendor: ARM
 
 Package Vendor: NordicSemiconductor
                 http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/NordicSemiconductor.nRF_BLE.4.0.0-2.alpha.pack
-                NordicSemiconductor::nRF_BLE:BLE_Modules:peer_manager:4.0.0-2.alpha
+                NordicSemiconductor::nRF_BLE:BLE_Services:ble_hts:4.0.0-2.alpha
                 Bluetooth Low Energy (Bluetooth Smart) services and software modules for Nordic Semiconductor nRF family.
+   * Component: ble_hts Version: 4.0.0-2.alpha
    * Component: peer_manager Version: 4.0.0-2.alpha
    * Component: peer_data_storage Version: 4.0.0-2.alpha
    * Component: ble_hrs Version: 4.0.0-2.alpha
@@ -147,6 +148,7 @@ Package Vendor: NordicSemiconductor
   C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_db_discovery
   C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_services\ble_hrs
   C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_services\ble_hrs_c
+  C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_services\ble_hts
   C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_services\ble_rscs
   C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_services\ble_rscs_c
   C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\common
@@ -177,6 +179,10 @@ Package Vendor: NordicSemiconductor
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:4.3.0
+
+   * Component: NordicSemiconductor::nRF_BLE:BLE_Services:ble_hts:4.0.0-2.alpha
+      Source file:   ble_services\ble_hts\ble_hts.c
+      Include file:  ble_services\ble_hts\ble_hts.h
 
    * Component: NordicSemiconductor::nRF_BLE:BLE_Modules:peer_manager:4.0.0-2.alpha
       Source file:   peer_manager\peer_manager.c

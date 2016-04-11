@@ -77,25 +77,24 @@ ARM Macro Assembler    Page 2
    42 00000800         __initial_sp
    43 00000800         
    44 00000800                 IF               :DEF: __HEAP_SIZE
-   45 00000800 00000000 
+   47 00000800 00000800 
                        Heap_Size
-                               EQU              __HEAP_SIZE
-   46 00000800                 ELSE
-   48                          ENDIF
+                               EQU              2048
+   48 00000800                 ENDIF
    49 00000800         
    50 00000800                 AREA             HEAP, NOINIT, READWRITE, ALIGN=
 3
    51 00000000         __heap_base
    52 00000000         Heap_Mem
                                SPACE            Heap_Size
-   53 00000000         __heap_limit
-   54 00000000         
-   55 00000000                 PRESERVE8
-   56 00000000                 THUMB
-   57 00000000         
-   58 00000000         ; Vector Table Mapped to Address 0 at Reset
-   59 00000000         
-   60 00000000                 AREA             RESET, DATA, READONLY
+   53 00000800         __heap_limit
+   54 00000800         
+   55 00000800                 PRESERVE8
+   56 00000800                 THUMB
+   57 00000800         
+   58 00000800         ; Vector Table Mapped to Address 0 at Reset
+   59 00000800         
+   60 00000800                 AREA             RESET, DATA, READONLY
    61 00000000                 EXPORT           __Vectors
    62 00000000                 EXPORT           __Vectors_End
    63 00000000                 EXPORT           __Vectors_Size
@@ -128,13 +127,13 @@ ARM Macro Assembler    Page 2
    88 00000054 00000000        DCD              0           ; Reserved
    89 00000058 00000000        DCD              GPIOTE_IRQHandler
    90 0000005C 00000000        DCD              ADC_IRQHandler
+   91 00000060 00000000        DCD              TIMER0_IRQHandler
 
 
 
 ARM Macro Assembler    Page 3 
 
 
-   91 00000060 00000000        DCD              TIMER0_IRQHandler
    92 00000064 00000000        DCD              TIMER1_IRQHandler
    93 00000068 00000000        DCD              TIMER2_IRQHandler
    94 0000006C 00000000        DCD              RTC0_IRQHandler
@@ -193,13 +192,13 @@ ARM Macro Assembler    Page 3
   133 00000000 2103            MOVS             R1, #NRF_POWER_RAMONx_RAMxON_ON
 MODE_Msk
   134 00000002         
+  135 00000002 4809            LDR              R0, =NRF_POWER_RAMON_ADDRESS
 
 
 
 ARM Macro Assembler    Page 4 
 
 
-  135 00000002 4809            LDR              R0, =NRF_POWER_RAMON_ADDRESS
   136 00000004 6802            LDR              R2, [R0]
   137 00000006 430A            ORRS             R2, R2, R1
   138 00000008 6002            STR              R2, [R0]
@@ -258,13 +257,13 @@ ARM Macro Assembler    Page 4
   180 00000024                 EXPORT           SPI0_TWI0_IRQHandler [WEAK]
   181 00000024                 EXPORT           SPI1_TWI1_IRQHandler [WEAK]
   182 00000024                 EXPORT           GPIOTE_IRQHandler [WEAK]
+  183 00000024                 EXPORT           ADC_IRQHandler [WEAK]
 
 
 
 ARM Macro Assembler    Page 5 
 
 
-  183 00000024                 EXPORT           ADC_IRQHandler [WEAK]
   184 00000024                 EXPORT           TIMER0_IRQHandler [WEAK]
   185 00000024                 EXPORT           TIMER1_IRQHandler [WEAK]
   186 00000024                 EXPORT           TIMER2_IRQHandler [WEAK]
@@ -323,67 +322,60 @@ ARM Macro Assembler    Page 5
   239 00000028                 ELSE
   253                          ENDIF
   254 00000028         
+  255 00000028                 END
 
 
 
 ARM Macro Assembler    Page 6 
 
 
-  255 00000028                 END
               40000524 
               40000554 
               00000000 
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M0 --apcs=interw
 ork --depend=.\_build\arm_startup_nrf51.d -o.\_build\arm_startup_nrf51.o -IS:\n
-rf_Pi_temp_project\nrf51_pi_house_monitor\nrf_pi_extention\BLE_central\ble_cent
-ral_and_peripheral\experimental\ble_app_hrs_rscs_relay\pca10028\s130\arm5\RTE -
-IS:\nrf_Pi_temp_project\nrf51_pi_house_monitor\nrf_pi_extention\BLE_central\ble
-_central_and_peripheral\experimental\ble_app_hrs_rscs_relay\pca10028\s130\arm5\
-RTE\nRF_BLE\nRF51422_xxAC -IS:\nrf_Pi_temp_project\nrf51_pi_house_monitor\nrf_p
-i_extention\BLE_central\ble_central_and_peripheral\experimental\ble_app_hrs_rsc
-s_relay\pca10028\s130\arm5\RTE\nRF_Drivers\nRF51422_xxAC -IS:\nrf_Pi_temp_proje
-ct\nrf51_pi_house_monitor\nrf_pi_extention\BLE_central\ble_central_and_peripher
-al\experimental\ble_app_hrs_rscs_relay\pca10028\s130\arm5\RTE\nRF_Libraries\nRF
-51422_xxAC -IC:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include -IC:\Keil_v5\ARM
-\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_advertising -IC:\Keil_v5\AR
-M\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_db_discovery -IC:\Keil_v5\
-ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_services\ble_hrs -IC:\Ke
-il_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_services\ble_hrs_c
- -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_services\b
-le_hts -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\ble_serv
-ices\ble_rscs -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\b
-le_services\ble_rscs_c -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-
-2.alpha\common -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0.0-2.alpha\
-peer_manager -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3
-.1\Device\Include -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPac
-k\8.3.2\Device\Include -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.
-0.0-2.alpha\common -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.0.0-
-2.alpha\config -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.0.0-2.al
-pha\delay -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.0.0-2.alpha\g
-piote -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.0.0-2.alpha\hal -
-IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.0.0-2.alpha\pstorage -IC
-:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.0.0-2.alpha\uart -IC:\Keil
-_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers_External\1.2.1-2.alpha\segger_rtt 
--IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Examples\11.0.0-2.alpha\bsp -IC:\
-Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alpha\button -IC:\Ke
-il_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alpha\experimental_sec
-tion_vars -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alpha
-\fds -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alpha\fsto
-rage -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alpha\time
-r -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alpha\trace -
-IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alpha\uart -IC:\
-Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alpha\util -IC:\Keil
-_v5\ARM\PACK\NordicSemiconductor\nRF_SoftDevice_Common\2.0.0-2.alpha\softdevice
-_handler -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_SoftDevice_S130\2.0.0-7.
-alpha\headers -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_SoftDevice_S130\2.0
-.0-7.alpha\headers\nrf51 --predefine="__EVAL SETA 1" --predefine="__MICROLIB SE
-TA 1" --predefine="__UVISION_VERSION SETA 518" --predefine="_RTE_ SETA 1" --pre
-define="NRF51 SETA 1" --predefine="BLE_STACK_SUPPORT_REQD SETA 1" --predefine="
-__HEAP_SIZE SETA 0" --predefine="S130 SETA 1" --predefine="BOARD_PCA10028 SETA 
-1" --predefine="NRF_LOG_USES_UART SETA 1" --predefine="SOFTDEVICE_PRESENT SETA 
-1" --predefine="NRF51 SETA 1" --predefine="SWI_DISABLE0 SETA 1" --list=.\_build
-\arm_startup_nrf51.lst RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s
+rf_Pi_temp_project\nrf51_pi_house_monitor\nrf_temp_sensor\ble_temp_peripheral\b
+le_peripheral\ble_app_hts\pca10028\s130\arm5\RTE -IS:\nrf_Pi_temp_project\nrf51
+_pi_house_monitor\nrf_temp_sensor\ble_temp_peripheral\ble_peripheral\ble_app_ht
+s\pca10028\s130\arm5\RTE\nRF_BLE\nRF51422_xxAC -IS:\nrf_Pi_temp_project\nrf51_p
+i_house_monitor\nrf_temp_sensor\ble_temp_peripheral\ble_peripheral\ble_app_hts\
+pca10028\s130\arm5\RTE\nRF_Drivers\nRF51422_xxAC -IS:\nrf_Pi_temp_project\nrf51
+_pi_house_monitor\nrf_temp_sensor\ble_temp_peripheral\ble_peripheral\ble_app_ht
+s\pca10028\s130\arm5\RTE\nRF_Libraries\nRF51422_xxAC -IC:\Keil_v5\ARM\PACK\ARM\
+CMSIS\4.5.0\CMSIS\Include -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.0
+.0-2.alpha\ble_advertising -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_BLE\4.
+0.0-2.alpha\ble_services\ble_bas -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_
+BLE\4.0.0-2.alpha\ble_services\ble_dis -IC:\Keil_v5\ARM\PACK\NordicSemiconducto
+r\nRF_BLE\4.0.0-2.alpha\ble_services\ble_hts -IC:\Keil_v5\ARM\PACK\NordicSemico
+nductor\nRF_BLE\4.0.0-2.alpha\common -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\
+nRF_BLE\4.0.0-2.alpha\device_manager -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\
+nRF_DeviceFamilyPack\8.3.1\Device\Include -IC:\Keil_v5\ARM\PACK\NordicSemicondu
+ctor\nRF_DeviceFamilyPack\8.3.2\Device\Include -IC:\Keil_v5\ARM\PACK\NordicSemi
+conductor\nRF_Drivers\4.0.0-2.alpha\common -IC:\Keil_v5\ARM\PACK\NordicSemicond
+uctor\nRF_Drivers\4.0.0-2.alpha\config -IC:\Keil_v5\ARM\PACK\NordicSemiconducto
+r\nRF_Drivers\4.0.0-2.alpha\delay -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF
+_Drivers\4.0.0-2.alpha\gpiote -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Dri
+vers\4.0.0-2.alpha\hal -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.
+0.0-2.alpha\pstorage -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.0.
+0-2.alpha\uart -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers_External\1
+.2.1-2.alpha\segger_rtt -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Examples\
+11.0.0-2.alpha\bsp -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.
+0-2.alpha\button -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-
+2.alpha\sensorsim -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0
+-2.alpha\timer -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.
+alpha\trace -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alp
+ha\uart -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Libraries\4.0.0-2.alpha\u
+til -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_SoftDevice_Common\2.0.0-2.alp
+ha\softdevice_handler -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_SoftDevice_
+S130\2.0.0-7.alpha\headers -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_SoftDe
+vice_S130\2.0.0-7.alpha\headers\nrf51 --predefine="__EVAL SETA 1" --predefine="
+__MICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 518" --predefine="_RTE_ 
+SETA 1" --predefine="NRF51 SETA 1" --predefine="BLE_STACK_SUPPORT_REQD SETA 1" 
+--predefine="S130 SETA 1" --predefine="BOARD_PCA10028 SETA 1" --predefine="NRF_
+LOG_USES_UART SETA 1" --predefine="SOFTDEVICE_PRESENT SETA 1" --predefine="NRF5
+1 SETA 1" --predefine="SWI_DISABLE0 SETA 1" --list=.\_build\arm_startup_nrf51.l
+st RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s
 
 
 
@@ -446,7 +438,7 @@ Symbol: __heap_base
    Uses
       At line 236 in file RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s
 Comment: __heap_base used once
-__heap_limit 00000000
+__heap_limit 00000800
 
 Symbol: __heap_limit
    Definitions
@@ -826,11 +818,11 @@ Relocatable symbols
 ARM Macro Assembler    Page 1 Alphabetic symbol ordering
 Absolute symbols
 
-Heap_Size 00000000
+Heap_Size 00000800
 
 Symbol: Heap_Size
    Definitions
-      At line 45 in file RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s
+      At line 47 in file RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s
    Uses
       At line 52 in file RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s
 Comment: Heap_Size used once
@@ -898,4 +890,4 @@ Symbol: __main
       At line 147 in file RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s
 Comment: __main used once
 2 symbols
-397 symbols in table
+398 symbols in table
