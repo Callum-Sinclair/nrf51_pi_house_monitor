@@ -68,7 +68,9 @@
 
 #include "fds.h"
 
-#define CENTRAL_LINK_COUNT          2                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
+#define NUM_TEMP_DEVS               2                                  /**<max number of wireless thermometers to be connected to the the application. When changing this number remember to adjust the RAM settings*/
+
+#define CENTRAL_LINK_COUNT          NUM_TEMP_DEVS                      /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT       1                                  /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
 #define APPL_LOG                    app_trace_log                      /**< Macro used to log debug information over UART. */
@@ -138,10 +140,9 @@ static const ble_gap_conn_params_t m_connection_param =
 };
 
 static ble_rscs_c_t              m_ble_rsc_c;                                       /**< Main structure used by the Running speed and cadence client module. */
-static uint16_t                  m_conn_handle_0_c = BLE_CONN_HANDLE_INVALID;       /**< Connection handle for the RSC central application */
-static uint16_t                  m_conn_handle_1_c = BLE_CONN_HANDLE_INVALID;       /**< Connection handle for the RSC central application */
-static bool                      dev_0_connected = false;
-static bool                      dev_1_connected = false;
+
+static uint16_t                  m_conn_handle_c[NUM_TEMP_DEVS];                    /**< Connection handle for the central application */
+static bool                      dev_connected[NUM_TEMP_DEVS];
 static ble_db_discovery_t        m_ble_db_discovery_rsc;                            /**< RSC service DB structure used by the database discovery module. */
 
 /* Peripheral related. */
@@ -469,16 +470,16 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 // Reset the peer address we had saved.
                 memset(&periph_addr_rsc, 0, sizeof(ble_gap_addr_t));
                 
-                if (!dev_0_connected)
+                //find first unused connection
+                for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
                 {
-                    m_conn_handle_0_c = p_gap_evt->conn_handle;
-                    dev_0_connected = true;
+                    if (!dev_connected[i])
+                    {
+                        m_conn_handle_c[i] = p_gap_evt->conn_handle;
+                        dev_connected[i] = true;
+                        i = NUM_TEMP_DEVS + 1; //break out of for loop as have got correct value
+                    }
                 }
-                else if (!dev_1_connected)
-                {
-                    m_conn_handle_1_c = p_gap_evt->conn_handle;
-                    dev_1_connected = true;
-                } 
                 //NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
@@ -504,22 +505,18 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
         case BLE_GAP_EVT_DISCONNECTED:
         {
             uint8_t n_centrals;
-
-            if(p_gap_evt->conn_handle == m_conn_handle_0_c)
+            
+            for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
             {
-                //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
-                 //      p_gap_evt->params.disconnected.reason);
+                if(p_gap_evt->conn_handle == m_conn_handle_c[i])
+                {
+                    //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
+                     //      p_gap_evt->params.disconnected.reason);
 
-                m_conn_handle_0_c = BLE_CONN_HANDLE_INVALID;
-                dev_0_connected = false;
-            }
-            else if(p_gap_evt->conn_handle == m_conn_handle_1_c)
-            {
-                //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
-                 //      p_gap_evt->params.disconnected.reason);
-
-                m_conn_handle_1_c = BLE_CONN_HANDLE_INVALID;
-                dev_1_connected = false;
+                    m_conn_handle_c[i] = BLE_CONN_HANDLE_INVALID;
+                    dev_connected[i] = false;
+                    i = NUM_TEMP_DEVS + 1; //break out of for loop
+                }
             }
 
             // Start scanning
@@ -574,17 +571,15 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 UUID16_EXTRACT(&extracted_uuid, &type_data.p_data[u_index * UUID16_SIZE]);
 
                 /** Limit the number of connections possible */
-                if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
-                         (dev_0_connected == false))
+                for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
                 {
-                    do_connect = true;
-                    memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
-                }
-                else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
-                         (dev_1_connected == false))
-                {
-                    do_connect = true;
-                    memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
+                    if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
+                             (dev_connected[i] == false))
+                    {
+                        do_connect = true;
+                        memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
+                        i = NUM_TEMP_DEVS + 1; //break out of for loop
+                    }
                 }
 
                 if (do_connect)
@@ -720,10 +715,14 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
             on_ble_central_evt(p_ble_evt);
         }
 
-        if (conn_handle == m_conn_handle_0_c || conn_handle == m_conn_handle_1_c)
+        for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
         {
-            ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
-            ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
+            if (conn_handle == m_conn_handle_c[i])
+            {
+                ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
+                ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
+                i = NUM_TEMP_DEVS + 1; //break out of for loop
+            }
         }
 
         // If the peer disconnected, we update the connection handles last.
@@ -981,6 +980,14 @@ static void advertising_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+void connections_log_init(void)
+{
+    for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
+    {
+        m_conn_handle_c[i] = BLE_CONN_HANDLE_INVALID;
+        dev_connected[i]   = false;
+    }    
+}
 
 /** @brief Function to sleep until a BLE event is received by the application.
  */
@@ -1003,7 +1010,8 @@ int main(void)
 
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, NULL);
     buttons_leds_init(&erase_bonds);
-
+    connections_log_init();
+    
     if (erase_bonds == true)
     {
         //NRF_LOG("Bonds erased!\r\n");
