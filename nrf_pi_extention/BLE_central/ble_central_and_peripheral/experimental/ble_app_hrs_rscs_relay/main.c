@@ -138,7 +138,10 @@ static const ble_gap_conn_params_t m_connection_param =
 };
 
 static ble_rscs_c_t              m_ble_rsc_c;                                       /**< Main structure used by the Running speed and cadence client module. */
-static uint16_t                  m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
+static uint16_t                  m_conn_handle_0_c = BLE_CONN_HANDLE_INVALID;       /**< Connection handle for the RSC central application */
+static uint16_t                  m_conn_handle_1_c = BLE_CONN_HANDLE_INVALID;       /**< Connection handle for the RSC central application */
+static bool                      dev_0_connected = false;
+static bool                      dev_1_connected = false;
 static ble_db_discovery_t        m_ble_db_discovery_rsc;                            /**< RSC service DB structure used by the database discovery module. */
 
 /* Peripheral related. */
@@ -465,9 +468,17 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 //NRF_LOG_PRINTF("RSC central connected\r\n");
                 // Reset the peer address we had saved.
                 memset(&periph_addr_rsc, 0, sizeof(ble_gap_addr_t));
-
-                m_conn_handle_rscs_c = p_gap_evt->conn_handle;
-
+                
+                if (!dev_0_connected)
+                {
+                    m_conn_handle_0_c = p_gap_evt->conn_handle;
+                    dev_0_connected = true;
+                }
+                else if (!dev_1_connected)
+                {
+                    m_conn_handle_1_c = p_gap_evt->conn_handle;
+                    dev_1_connected = true;
+                } 
                 //NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
@@ -494,12 +505,21 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
         {
             uint8_t n_centrals;
 
-            if(p_gap_evt->conn_handle == m_conn_handle_rscs_c)
+            if(p_gap_evt->conn_handle == m_conn_handle_0_c)
             {
                 //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
                  //      p_gap_evt->params.disconnected.reason);
 
-                m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;
+                m_conn_handle_0_c = BLE_CONN_HANDLE_INVALID;
+                dev_0_connected = false;
+            }
+            else if(p_gap_evt->conn_handle == m_conn_handle_1_c)
+            {
+                //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
+                 //      p_gap_evt->params.disconnected.reason);
+
+                m_conn_handle_1_c = BLE_CONN_HANDLE_INVALID;
+                dev_1_connected = false;
             }
 
             // Start scanning
@@ -553,13 +573,15 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 
                 UUID16_EXTRACT(&extracted_uuid, &type_data.p_data[u_index * UUID16_SIZE]);
 
-                /** We do not want to connect to two peripherals offering the same service, so when
-                 *  a UUID is matched, we check that we are not already connected to a peer which
-                 *  offers the same service. We then save the peer address, so that upon connection
-                 *  we can tell which peer has connected and update its respective connection
-                 *  handle. */
+                /** Limit the number of connections possible */
                 if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
-                         (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID))
+                         (dev_0_connected == false))
+                {
+                    do_connect = true;
+                    memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
+                }
+                else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
+                         (dev_1_connected == false))
                 {
                     do_connect = true;
                     memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
@@ -698,7 +720,7 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
             on_ble_central_evt(p_ble_evt);
         }
 
-        if (conn_handle == m_conn_handle_rscs_c)
+        if (conn_handle == m_conn_handle_0_c || conn_handle == m_conn_handle_1_c)
         {
             ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);

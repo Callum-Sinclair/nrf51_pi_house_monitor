@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\_build\nrf51422_xxaa_s130.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\_build\nrf51422_xxaa_s130.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Tue Apr 12 02:02:43 2016
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Tue Apr 12 02:29:26 2016
 <BR><P>
 <H3>Maximum Stack Usage =        584 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -596,11 +596,11 @@ Global Symbols
 <P><STRONG><a name="[83]"></a>ble_advertising_start</STRONG> (Thumb, 470 bytes, Stack size 48 bytes, ble_advertising.o(i.ble_advertising_start))
 <BR><BR>[Stack]<UL><LI>Max Depth = 288<LI>Call Chain = ble_advertising_start &rArr; ble_advdata_set &rArr; adv_data_encode &rArr; uuid_list_encode &rArr; uuid_list_sized_encode
 </UL>
-<BR>[Calls]<UL><LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pstorage_access_status_get
-<LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;whitelist_has_entries
+<BR>[Calls]<UL><LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;whitelist_has_entries
 <LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;peer_address_exists
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_advertising_peer_address_clear
 <LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_advdata_set
+<LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pstorage_access_status_get
 <LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 </UL>
 <BR>[Called By]<UL><LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_advertising_on_sys_evt
@@ -2132,7 +2132,7 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_ble_central_evt
 </UL>
 
-<P><STRONG><a name="[28]"></a>ble_evt_dispatch</STRONG> (Thumb, 150 bytes, Stack size 16 bytes, main.o(i.ble_evt_dispatch))
+<P><STRONG><a name="[28]"></a>ble_evt_dispatch</STRONG> (Thumb, 156 bytes, Stack size 16 bytes, main.o(i.ble_evt_dispatch))
 <BR><BR>[Stack]<UL><LI>Max Depth = 584<LI>Call Chain = ble_evt_dispatch &rArr; pm_ble_evt_handler &rArr; gcm_ble_evt_handler &rArr; local_db_update_in_evt &rArr; gscm_local_db_cache_update &rArr; pdb_write_buf_store &rArr; write_or_update &rArr; pds_peer_data_write_prepared &rArr; fds_write_reserved &rArr; write_enqueue &rArr; cmd_queue_process_start &rArr; cmd_queue_process &rArr;  cmd_queue_process (Cycle)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pm_ble_evt_handler
@@ -2179,7 +2179,7 @@ Local Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.main)
 </UL>
-<P><STRONG><a name="[a4]"></a>on_ble_central_evt</STRONG> (Thumb, 282 bytes, Stack size 40 bytes, main.o(i.on_ble_central_evt))
+<P><STRONG><a name="[a4]"></a>on_ble_central_evt</STRONG> (Thumb, 334 bytes, Stack size 40 bytes, main.o(i.on_ble_central_evt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = on_ble_central_evt &rArr; ble_conn_state_n_centrals &rArr; sdk_mapped_flags_n_flags_set
 </UL>
 <BR>[Calls]<UL><LI><a href="#[141]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_db_discovery_start
