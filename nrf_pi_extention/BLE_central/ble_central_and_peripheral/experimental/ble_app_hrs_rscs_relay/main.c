@@ -68,7 +68,7 @@
 
 #include "fds.h"
 
-#define NUM_TEMP_DEVS               2                                  /**<max number of wireless thermometers to be connected to the the application. When changing this number remember to adjust the RAM settings*/
+#define NUM_TEMP_DEVS               3                                  /**<max number of wireless thermometers to be connected to the the application. When changing this number remember to adjust the RAM settings*/
 
 #define CENTRAL_LINK_COUNT          NUM_TEMP_DEVS                      /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT       1                                  /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
