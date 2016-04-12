@@ -10,7 +10,6 @@
       <TargetName>nrf51422_xxac_s130</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060061::V5.06 update 1 (build 61)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>nRF51422_xxAC</Device>
@@ -494,7 +493,7 @@ rf51xxx.flm))</FlashDriverDll>
           <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile>$$Device:nRF51422_xxAC$SVD\nrf51.svd</SFDFile>
+          <SFDFile></SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -1516,7 +1515,7 @@ rf51xxx.flm))</FlashDriverDll>
           <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
         </targetInfos>
       </component>
-      <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_hts" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+      <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_rscs" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
         <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
         <targetInfos>
           <targetInfo excluded="1" name="flash_softdevice"/>
