@@ -185,6 +185,25 @@ typedef struct
 
 temp_t latest_temp[10];
 
+// Functions for controlling the LED on the PCB
+#define INDICATE_LED_PIN  10
+#define INDICATE_LED_MASK (1 << INDICATE_LED_PIN)
+void indicate_led_init(void)
+{
+    NRF_GPIO->PIN_CNF[INDICATE_LED_PIN] = ((GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) | \
+                                           (GPIO_PIN_CNF_DRIVE_H0H1 << GPIO_PIN_CNF_DRIVE_Pos));
+    NRF_GPIO->DIRSET = INDICATE_LED_MASK;
+    NRF_GPIO->OUTCLR = INDICATE_LED_MASK;
+}
+void indicate_led_on(void)
+{
+    NRF_GPIO->OUTSET = INDICATE_LED_MASK;
+}
+void indicate_led_off(void)
+{
+    NRF_GPIO->OUTCLR = INDICATE_LED_MASK;
+}
+
 /**@brief Function to handle asserts in the SoftDevice.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -1003,15 +1022,16 @@ int main(void)
     ret_code_t err_code;
     bool       erase_bonds;
 
-    err_code = NRF_LOG_INIT();
-    APP_ERROR_CHECK(err_code);
+    //err_code = NRF_LOG_INIT();
+    //APP_ERROR_CHECK(err_code);
 
     //NRF_LOG_PRINTF("Relay Example\r\n");
 
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, NULL);
     buttons_leds_init(&erase_bonds);
     connections_log_init();
-    
+    indicate_led_init();
+    indicate_led_on();
     if (erase_bonds == true)
     {
         //NRF_LOG("Bonds erased!\r\n");
