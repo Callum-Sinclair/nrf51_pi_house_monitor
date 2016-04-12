@@ -478,12 +478,14 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
          *  discovery, update LEDs status and resume scanning if necessary. */
         case BLE_GAP_EVT_CONNECTED:
         {
-            rb_led_on();
+            //rb_led_on();
             uint32_t err_code;
 
 
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
+            if (err_code == NRF_SUCCESS)
+                rb_led_on();
 
         } break; // BLE_GAP_EVT_CONNECTED
 
