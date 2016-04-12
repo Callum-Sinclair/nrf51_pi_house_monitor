@@ -133,6 +133,26 @@ static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUI
                                    {BLE_UUID_BATTERY_SERVICE,            BLE_UUID_TYPE_BLE},
                                    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
+// Functions for controlling the LED on the PCB
+#define INDICATE_LED_PIN  10
+#define INDICATE_LED_MASK (1 << INDICATE_LED_PIN)
+void indicate_led_init(void)
+{
+    NRF_GPIO->PIN_CNF[INDICATE_LED_PIN] = ((GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) | \
+                                           (GPIO_PIN_CNF_DRIVE_H0H1 << GPIO_PIN_CNF_DRIVE_Pos));
+    NRF_GPIO->DIRSET = INDICATE_LED_MASK;
+    NRF_GPIO->OUTCLR = INDICATE_LED_MASK;
+}
+void indicate_led_on(void)
+{
+    NRF_GPIO->OUTSET = INDICATE_LED_MASK;
+}
+void indicate_led_off(void)
+{
+    NRF_GPIO->OUTCLR = INDICATE_LED_MASK;
+}
+
+
 /**@brief Callback function for asserts in the SoftDevice.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -753,6 +773,7 @@ int main(void)
     bool erase_bonds;
 
     // Initialize.
+    indicate_led_init();
     app_trace_init();
     timers_init();
     buttons_leds_init(&erase_bonds);
