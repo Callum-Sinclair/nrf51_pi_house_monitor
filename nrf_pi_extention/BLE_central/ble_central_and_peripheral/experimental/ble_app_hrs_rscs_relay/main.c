@@ -161,6 +161,25 @@ static ble_rscs_t   m_rscs;                                                     
 static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUID_TYPE_BLE},
                                    {BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE}};
 
+/* Tempartature logging, readying for UART */
+/**@brief Structure containing the Temparature measurement received from the peer
+ *        This originates from a recieved RSC service packet. 
+ */
+typedef struct
+{
+    //bool     is_inst_stride_len_present;             /**< True if Instantaneous Stride Length is present in the measurement. */
+    //bool     is_total_distance_present;              /**< True if Total Distance is present in the measurement. */
+    bool     posative;  //is_running;                             /**< True if running, False if walking. */
+    uint16_t temp;      //inst_speed;                             /**< Instantaneous Speed. */
+    uint8_t  id;        //inst_cadence;                           /**< Instantaneous Cadence. */
+    //uint16_t inst_stride_length;                     /**< Instantaneous Stride Length. */
+    //uint32_t total_distance;                         /**< Total Distance. */
+} temp_t;
+#define TEMP_ID     inst_cadence
+#define TEMP_TEMP   inst_speed
+#define TEMP_POS    is_running
+
+temp_t latest_temp[10];
 
 /**@brief Function to handle asserts in the SoftDevice.
  *
@@ -376,15 +395,18 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
             ble_rscs_meas_t rscs_measurment;
 
            // NRF_LOG_PRINTF("Speed      = %d\r\n", p_rscs_c_evt->params.rsc.inst_speed);
+            latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].id        = p_rscs_c_evt->params.rsc.TEMP_ID;
+            latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].posative  = p_rscs_c_evt->params.rsc.TEMP_POS;
+            latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].temp      = p_rscs_c_evt->params.rsc.TEMP_TEMP;
+            
+            rscs_measurment.is_running                  = true;
+            rscs_measurment.is_inst_stride_len_present  = false;
+            rscs_measurment.is_total_distance_present   = false;
 
-            rscs_measurment.is_running                  = p_rscs_c_evt->params.rsc.is_running;
-            rscs_measurment.is_inst_stride_len_present  = p_rscs_c_evt->params.rsc.is_inst_stride_len_present;
-            rscs_measurment.is_total_distance_present   = p_rscs_c_evt->params.rsc.is_total_distance_present;
-
-            rscs_measurment.inst_stride_length = p_rscs_c_evt->params.rsc.inst_stride_length;
-            rscs_measurment.inst_cadence       = p_rscs_c_evt->params.rsc.inst_cadence;
-            rscs_measurment.inst_speed         = p_rscs_c_evt->params.rsc.inst_speed;
-            rscs_measurment.total_distance     = p_rscs_c_evt->params.rsc.total_distance;
+            rscs_measurment.inst_stride_length = 0;
+            rscs_measurment.inst_cadence       = latest_temp[1].temp;
+            rscs_measurment.inst_speed         = latest_temp[0].temp;
+            rscs_measurment.total_distance     = latest_temp[2].temp;
 
             err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurment);
             if ((err_code != NRF_SUCCESS) &&
