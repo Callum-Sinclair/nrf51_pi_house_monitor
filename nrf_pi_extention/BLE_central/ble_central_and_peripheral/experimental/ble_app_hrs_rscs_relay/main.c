@@ -185,6 +185,18 @@ typedef struct
 
 temp_t latest_temp[10];
 
+// Pin used to trigger debug events
+#define DEBUG_PIN         8
+#define DEBUG_PIN_MASK    (1 << DEBUG_PIN)
+void debug_pin_init(void)
+{
+    NRF_GPIO->PIN_CNF[DEBUG_PIN] = ((GPIO_PIN_CNF_DIR_Input      << GPIO_PIN_CNF_DIR_Pos) | \
+                                    (GPIO_PIN_CNF_INPUT_Connect  << GPIO_PIN_CNF_INPUT_Pos) | \
+                                    (GPIO_PIN_CNF_PULL_Pullup    << GPIO_PIN_CNF_PULL_Pos) | \
+                                    (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos));
+    NRF_GPIO->DIRCLR = DEBUG_PIN_MASK;
+}
+
 // Functions for controlling the LED on the PCB
 #define INDICATE_LED_PIN  10
 #define INDICATE_LED_MASK (1 << INDICATE_LED_PIN)
@@ -1008,12 +1020,34 @@ void connections_log_init(void)
     }    
 }
 
+void indicate_dev(uint8_t dev)
+{
+    m_ble_rsc_c.conn_handle = m_conn_handle_c[dev];
+    ble_rscs_c_rsc_notif_enable(&m_ble_rsc_c);
+}
+
+bool debug_trigger(void)
+{
+    if (NRF_GPIO->IN & DEBUG_PIN_MASK)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 /** @brief Function to sleep until a BLE event is received by the application.
  */
 static void power_manage(void)
 {
     ret_code_t err_code = sd_app_evt_wait();
     APP_ERROR_CHECK(err_code);
+    if (debug_trigger())
+    {
+        indicate_dev(0);
+    }
 }
 
 
@@ -1032,6 +1066,7 @@ int main(void)
     connections_log_init();
     indicate_led_init();
     indicate_led_on();
+    debug_pin_init();
     if (erase_bonds == true)
     {
         //NRF_LOG("Bonds erased!\r\n");
