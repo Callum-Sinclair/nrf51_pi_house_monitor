@@ -22,16 +22,25 @@ Dialog DLL:      TARMCM1.DLL V1.9.0.0
  
 <h2>Project:</h2>
 S:\nrf_Pi_temp_project\nrf51_pi_house_monitor\nrf_pi_extention\UART_demo\peripheral\uart\pca10028\arm5\uart_pca10028.uvprojx
-Project File Date:  12/18/2015
+Project File Date:  03/19/2016
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 1 (build 61)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'nrf51422_xxac'
 compiling main.c...
+..\..\main.c(113): warning:  #177-D: variable "rx_ch" was declared but never referenced
+      uint8_t rx_ch       = 0;
+..\..\main.c(114): warning:  #177-D: variable "status" was declared but never referenced
+      uint8_t status      = RECIEVE_IDLE;
+..\..\main.c(115): warning:  #177-D: variable "id_ch" was declared but never referenced
+      char    id_ch       = 0;
+..\..\main.c(116): warning:  #177-D: variable "id_num" was declared but never referenced
+      uint8_t id_num      = 99;
+..\..\main.c: 4 warnings, 0 errors
 linking...
-Program Size: Code=2536 RO-data=300 RW-data=36 ZI-data=2380  
+Program Size: Code=2480 RO-data=300 RW-data=16 ZI-data=2368  
 FromELF: creating hex file...
-".\_build\nrf51422_xxac.axf" - 0 Error(s), 0 Warning(s).
+".\_build\nrf51422_xxac.axf" - 0 Error(s), 4 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -49,33 +58,33 @@ Package Vendor: NordicSemiconductor
 
 Package Vendor: NordicSemiconductor
                 http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers/NordicSemiconductor.nRF_Drivers.4.0.0-2.alpha.pack
-                NordicSemiconductor::nRF_Drivers:nrf_error:No_softdevice:4.0.0-2.alpha
+                NordicSemiconductor::nRF_Drivers:nrf_drv_common:4.0.0-2.alpha
                 Drivers for Nordic Semiconductor nRF family.
+   * Component: nrf_drv_common Version: 4.0.0-2.alpha
+   * Component: nrf_delay Version: 4.0.0-2.alpha
+   * Component: nrf_gpio Version: 4.0.0-2.alpha
    * Component: nrf_error Variant: No_softdevice Version: 4.0.0-2.alpha
    * Component: nrf_uart Version: 4.0.0-2.alpha
    * Component: nrf_uarte Version: 4.0.0-2.alpha
-   * Component: nrf_gpio Version: 4.0.0-2.alpha
-   * Component: nrf_delay Version: 4.0.0-2.alpha
-   * Component: nrf_drv_common Version: 4.0.0-2.alpha
+   * Component: nrf_drv_uart Version: 4.0.0-2.alpha
 
 Package Vendor: NordicSemiconductor
                 http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Examples/NordicSemiconductor.nRF_Examples.11.0.0-2.alpha.pack
                 NordicSemiconductor::Board Support:bsp:Defines:11.0.0-2.alpha
                 Examples and BSP for Nordic Semiconductor nRF family.
    * Component: bsp Variant: Defines Version: 11.0.0-2.alpha
-   * Component: nrf_drv_uart Version: 4.0.0-2.alpha
 
 Package Vendor: NordicSemiconductor
                 http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/NordicSemiconductor.nRF_Libraries.4.0.0-2.alpha.pack
-                NordicSemiconductor::nRF_Drivers:app_uart:Fifo:4.0.0-2.alpha
+                NordicSemiconductor::nRF_Libraries:app_error:4.0.0-2.alpha
                 Software modules for Nordic Semiconductor nRF family.
-   * Component: app_uart Variant: Fifo Version: 4.0.0-2.alpha
    * Component: app_error Version: 4.0.0-2.alpha
    * Component: nrf_assert Version: 4.0.0-2.alpha
    * Component: app_fifo Version: 4.0.0-2.alpha
    * Component: retarget Version: 4.0.0-2.alpha
    * Component: app_util Variant: No_softdevice Version: 4.0.0-2.alpha
    * Component: nordic_common Version: 4.0.0-2.alpha
+   * Component: app_uart Variant: Fifo Version: 4.0.0-2.alpha
 
 <h2>Collection of Component include folders:</h2>
   S:\nrf_Pi_temp_project\nrf51_pi_house_monitor\nrf_pi_extention\UART_demo\peripheral\uart\pca10028\arm5\RTE
@@ -100,9 +109,21 @@ Package Vendor: NordicSemiconductor
    * Component: ARM::CMSIS:CORE:4.3.0
 
    * Component: NordicSemiconductor::Device:Startup:8.3.1
-      Source file:   Device\Source\arm\arm_startup_nrf51.s
       Source file:   Device\Source\system_nrf51.c
       Include file:  Device\Include\system_nrf51.h
+      Source file:   Device\Source\arm\arm_startup_nrf51.s
+
+   * Component: NordicSemiconductor::nRF_Drivers:nrf_drv_common:4.0.0-2.alpha
+      Source file:   common\nrf_drv_common.c
+      Include file:  common\nrf_drv_common.h
+      Include file:  config\nrf_drv_config.h
+
+   * Component: NordicSemiconductor::nRF_Drivers:nrf_delay:4.0.0-2.alpha
+      Include file:  delay\nrf_delay.h
+      Source file:   delay\nrf_delay.c
+
+   * Component: NordicSemiconductor::nRF_Drivers:nrf_gpio:4.0.0-2.alpha
+      Include file:  hal\nrf_gpio.h
 
    * Component: NordicSemiconductor::nRF_Drivers:nrf_error:No_softdevice:4.0.0-2.alpha
 
@@ -112,36 +133,20 @@ Package Vendor: NordicSemiconductor
    * Component: NordicSemiconductor::nRF_Drivers:nrf_uarte:4.0.0-2.alpha
       Include file:  hal\nrf_uarte.h
 
-   * Component: NordicSemiconductor::nRF_Drivers:nrf_gpio:4.0.0-2.alpha
-      Include file:  hal\nrf_gpio.h
-
-   * Component: NordicSemiconductor::nRF_Drivers:nrf_delay:4.0.0-2.alpha
-      Include file:  delay\nrf_delay.h
-      Source file:   delay\nrf_delay.c
-
-   * Component: NordicSemiconductor::nRF_Drivers:nrf_drv_common:4.0.0-2.alpha
-      Source file:   common\nrf_drv_common.c
-      Include file:  common\nrf_drv_common.h
-      Include file:  config\nrf_drv_config.h
-
-   * Component: NordicSemiconductor::Board Support:bsp:Defines:11.0.0-2.alpha
-
    * Component: NordicSemiconductor::nRF_Drivers:nrf_drv_uart:4.0.0-2.alpha
-      Source file:   uart\nrf_drv_uart.c
       Include file:  uart\nrf_drv_uart.h
       Include file:  config\nrf_drv_config.h
+      Source file:   uart\nrf_drv_uart.c
 
-   * Component: NordicSemiconductor::nRF_Drivers:app_uart:Fifo:4.0.0-2.alpha
-      Include file:  uart\app_uart.h
-      Source file:   uart\app_uart_fifo.c
+   * Component: NordicSemiconductor::Board Support:bsp:Defines:11.0.0-2.alpha
 
    * Component: NordicSemiconductor::nRF_Libraries:app_error:4.0.0-2.alpha
       Source file:   util\app_error.c
       Include file:  util\app_error.h
 
    * Component: NordicSemiconductor::nRF_Libraries:nrf_assert:4.0.0-2.alpha
-      Include file:  util\nrf_assert.h
       Source file:   util\nrf_assert.c
+      Include file:  util\nrf_assert.h
 
    * Component: NordicSemiconductor::nRF_Libraries:app_fifo:4.0.0-2.alpha
       Source file:   fifo\app_fifo.c
@@ -154,6 +159,10 @@ Package Vendor: NordicSemiconductor
       Source file:   util\app_util_platform.c
 
    * Component: NordicSemiconductor::nRF_Libraries:nordic_common:4.0.0-2.alpha
+
+   * Component: NordicSemiconductor::nRF_Drivers:app_uart:Fifo:4.0.0-2.alpha
+      Include file:  uart\app_uart.h
+      Source file:   uart\app_uart_fifo.c
 Build Time Elapsed:  00:00:01
 </pre>
 </body>
