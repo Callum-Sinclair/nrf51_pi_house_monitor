@@ -134,24 +134,61 @@ static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUI
                                    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
 // Functions for controlling the LED on the PCB
-#define INDICATE_LED_PIN  10
-#define INDICATE_LED_MASK (1 << INDICATE_LED_PIN)
+#define INDICATE_LED_PIN    10
+#define INDICATE_LED_MASK   (1 << INDICATE_LED_PIN)
+#define INDICATE_LED_TIMER  NRF_TIMER2
+void indicate_led_timer_init(void)
+{
+    //Timer setup
+    INDICATE_LED_TIMER->MODE = TIMER_MODE_MODE_Timer;
+    INDICATE_LED_TIMER->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
+    INDICATE_LED_TIMER->PRESCALER = 9; //gives T=0.032ms
+    
+    INDICATE_LED_TIMER->CC[0] = 0x1;
+    INDICATE_LED_TIMER->CC[1] = 0xFFFF;  // 2.1 s
+    
+    INDICATE_LED_TIMER->SHORTS = ((TIMER_SHORTS_COMPARE0_CLEAR_Enabled << TIMER_SHORTS_COMPARE1_CLEAR_Pos) | \
+                                  (TIMER_SHORTS_COMPARE0_STOP_Enabled  << TIMER_SHORTS_COMPARE1_STOP_Pos));
+    
+    INDICATE_LED_TIMER->TASKS_STOP = 1;
+    INDICATE_LED_TIMER->TASKS_CLEAR = 1;
+    
+    NRF_GPIOTE->CONFIG[0] = ((GPIOTE_CONFIG_MODE_Task       << GPIOTE_CONFIG_MODE_Pos) | \
+                             (INDICATE_LED_PIN              << GPIOTE_CONFIG_PSEL_Pos) | \
+                             (GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos) | \
+                             (GPIOTE_CONFIG_OUTINIT_Low     << GPIOTE_CONFIG_OUTINIT_Pos));
+    
+
+    //PPI setup
+    NRF_PPI->CH[0].EEP = (uint32_t)&(INDICATE_LED_TIMER->EVENTS_COMPARE[0]);
+    NRF_PPI->CH[0].TEP = (uint32_t)&(NRF_GPIOTE->TASKS_OUT[0]);
+    NRF_PPI->CH[1].EEP = (uint32_t)&(INDICATE_LED_TIMER->EVENTS_COMPARE[1]);
+    NRF_PPI->CH[1].TEP = (uint32_t)&(NRF_GPIOTE->TASKS_OUT[0]);
+    
+    NRF_PPI->CHENSET = 0x03;
+
+}
 void indicate_led_init(void)
 {
     NRF_GPIO->PIN_CNF[INDICATE_LED_PIN] = ((GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) | \
                                            (GPIO_PIN_CNF_DRIVE_H0H1 << GPIO_PIN_CNF_DRIVE_Pos));
     NRF_GPIO->DIRSET = INDICATE_LED_MASK;
     NRF_GPIO->OUTCLR = INDICATE_LED_MASK;
+    
+    indicate_led_timer_init();
 }
-void indicate_led_on(void)
+/*void indicate_led_on(void)
 {
     NRF_GPIO->OUTSET = INDICATE_LED_MASK;
 }
 void indicate_led_off(void)
 {
     NRF_GPIO->OUTCLR = INDICATE_LED_MASK;
+}*/
+void indicate_led_on_2s(void)
+{
+    INDICATE_LED_TIMER->TASKS_START = 1;
 }
-
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -551,6 +588,10 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
 
         case BLE_GAP_EVT_DISCONNECTED:
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+            break;
+        
+        case BLE_GATTS_EVT_WRITE:
+            indicate_led_on_2s();
             break;
 
         default:
