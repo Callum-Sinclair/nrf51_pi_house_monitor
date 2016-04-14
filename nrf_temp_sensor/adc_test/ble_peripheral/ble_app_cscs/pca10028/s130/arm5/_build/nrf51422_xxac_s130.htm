@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\_build\nrf51422_xxac_s130.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\_build\nrf51422_xxac_s130.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Thu Apr 14 21:52:41 2016
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Thu Apr 14 23:38:25 2016
 <BR><P>
 <H3>Maximum Stack Usage =        416 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -801,7 +801,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> entry9a.o(.ARM.Collect$$$$0000000B)
 </UL>
-<P><STRONG><a name="[75]"></a>measure_adc</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, main.o(i.measure_adc))
+<P><STRONG><a name="[75]"></a>measure_adc</STRONG> (Thumb, 38 bytes, Stack size 0 bytes, main.o(i.measure_adc))
 <BR><BR>[Called By]<UL><LI><a href="#[2a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;battery_level_meas_timeout_handler
 </UL>
 
@@ -1225,8 +1225,8 @@ Local Symbols
 <P><STRONG><a name="[86]"></a>conn_params_negotiation</STRONG> (Thumb, 92 bytes, Stack size 24 bytes, ble_conn_params.o(i.conn_params_negotiation))
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = conn_params_negotiation &rArr; app_timer_start
 </UL>
-<BR>[Calls]<UL><LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_conn_params_ok
-<LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;app_timer_start
+<BR>[Calls]<UL><LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;app_timer_start
+<LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_conn_params_ok
 </UL>
 <BR>[Called By]<UL><LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_conn_params_on_ble_evt
 </UL>
@@ -1917,10 +1917,10 @@ Local Symbols
 <P><STRONG><a name="[55]"></a>timer_list_handler</STRONG> (Thumb, 128 bytes, Stack size 32 bytes, app_timer.o(i.timer_list_handler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = timer_list_handler &rArr; compare_reg_update &rArr; rtc1_stop
 </UL>
-<BR>[Calls]<UL><LI><a href="#[d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;list_insertions_handler
-<LI><a href="#[e1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;list_deletions_handler
+<BR>[Calls]<UL><LI><a href="#[e1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;list_deletions_handler
 <LI><a href="#[e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;elapsed_ticks_acquire
 <LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;compare_reg_update
+<LI><a href="#[d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;list_insertions_handler
 </UL>
 <BR>[Called By]<UL><LI><a href="#[19]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SWI0_IRQHandler
 </UL>

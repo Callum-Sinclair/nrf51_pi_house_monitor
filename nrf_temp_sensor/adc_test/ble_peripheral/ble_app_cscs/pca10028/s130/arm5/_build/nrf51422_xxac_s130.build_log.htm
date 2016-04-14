@@ -27,7 +27,14 @@ Project File Date:  12/18/2015
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 1 (build 61)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'nrf51422_xxac_s130'
-".\_build\nrf51422_xxac_s130.axf" - 0 Error(s), 0 Warning(s).
+compiling main.c...
+..\..\..\main.c(756): warning:  #177-D: function "bsp_event_handler" was declared but never referenced
+  static void bsp_event_handler(bsp_event_t event)
+..\..\..\main.c: 1 warning, 0 errors
+linking...
+Program Size: Code=18172 RO-data=1420 RW-data=340 ZI-data=3860  
+FromELF: creating hex file...
+".\_build\nrf51422_xxac_s130.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -314,7 +321,7 @@ Package Vendor: NordicSemiconductor
       Include file:  headers\nrf_error.h
       Include file:  headers\nrf_error_sdm.h
       Include file:  headers\ble_l2cap.h
-Build Time Elapsed:  00:00:00
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>
