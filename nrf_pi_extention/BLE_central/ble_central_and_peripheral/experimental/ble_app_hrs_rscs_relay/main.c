@@ -86,6 +86,10 @@
 #define APP_TIMER_MAX_TIMERS        (2+BSP_APP_TIMERS_NUMBER)          /**< Maximum number of timers used by the application. */
 #define APP_TIMER_OP_QUEUE_SIZE     2                                  /**< Size of timer operation queues. */
 
+#define UART_TX_INTERVAL            APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER)  /**< UART tx interval (ticks). */
+
+APP_TIMER_DEF(m_uart_tx_timer_id);
+
 #define SEC_PARAM_BOND              1                                  /**< Perform bonding. */
 #define SEC_PARAM_MITM              0                                  /**< Man In The Middle protection not required. */
 #define SEC_PARAM_IO_CAPABILITIES   BLE_GAP_IO_CAPS_NONE               /**< No I/O capabilities. */
@@ -165,6 +169,18 @@ static ble_rscs_t   m_rscs;                                                     
 static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUID_TYPE_BLE},
                                    {BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE}};
 
+#define UART_RECIEVE_IDLE  0
+#define UART_RECIEVED_STX  1
+#define UART_RECIEVED_0    2
+#define UART_RECIEVED_ID   3
+#define UART_TX_IDLE       0
+#define UART_TX_BUSY       1
+#define UART_STX 2 //packet_start
+#define UART_ETX 3 //packet_end
+static uint8_t uart_rx_status   = UART_RECIEVE_IDLE;
+static uint8_t uart_tx_status   = UART_TX_IDLE;
+
+
 /* Tempartature logging, readying for UART */
 /**@brief Structure containing the Temparature measurement received from the peer
  *        This originates from a recieved RSC service packet. 
@@ -179,6 +195,7 @@ typedef struct
     //uint16_t inst_stride_length;                     /**< Instantaneous Stride Length. */
     //uint32_t total_distance;                         /**< Total Distance. */
 } temp_t;
+
 #define TEMP_ID     inst_cadence
 #define TEMP_TEMP   inst_speed
 #define TEMP_POS    is_running
@@ -198,7 +215,7 @@ void debug_pin_init(void)
 }
 
 // Functions for controlling the LED on the PCB
-#define INDICATE_LED_PIN  10
+#define INDICATE_LED_PIN  4
 #define INDICATE_LED_MASK (1 << INDICATE_LED_PIN)
 void indicate_led_init(void)
 {
@@ -216,6 +233,13 @@ void indicate_led_off(void)
     NRF_GPIO->OUTCLR = INDICATE_LED_MASK;
 }
 
+// Function to request that thermometer "dev" turns on its led
+void indicate_dev(uint8_t dev)
+{
+    m_ble_rsc_c.conn_handle = m_conn_handle_c[dev];
+    ble_rscs_c_rsc_notif_enable(&m_ble_rsc_c);
+}
+
 /**@brief Function to handle asserts in the SoftDevice.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -231,20 +255,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
-
-
-void uart_error_handle(app_uart_evt_t * p_event)
-{
-    if (p_event->evt_type == APP_UART_COMMUNICATION_ERROR)
-    {
-        APP_ERROR_HANDLER(p_event->data.error_communication);
-    }
-    else if (p_event->evt_type == APP_UART_FIFO_ERROR)
-    {
-        APP_ERROR_HANDLER(p_event->data.error_code);
-    }
-}
-
 
 /**@brief Function for handling errors from the Connection Parameters module.
  *
@@ -460,6 +470,155 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
     }
 }
 
+
+static void uart_data_rx_handler(void)
+{
+    uint8_t rx_ch           = 0;
+    char    id_ch           = 0;
+    uint8_t id_num          = 99;
+
+    app_uart_get(&rx_ch);
+    
+    if ((rx_ch == UART_STX) && (uart_rx_status == UART_RECIEVE_IDLE))
+    {
+        uart_rx_status = UART_RECIEVED_STX;
+    }
+    else if ((rx_ch == '0') && (uart_rx_status == UART_RECIEVED_STX))
+    {
+        uart_rx_status = UART_RECIEVED_0;
+    }
+    else if (uart_rx_status == UART_RECIEVED_0)
+    {
+        //indicate thermometer stated
+        id_ch = rx_ch;
+        id_num = id_ch - 48;
+        indicate_dev(id_num);
+        if (id_num % 2)
+        {
+            indicate_led_on();
+        }
+        else
+        {
+            indicate_led_off();
+        }
+        uart_rx_status = UART_RECIEVED_ID;
+    }
+    else if ((rx_ch == UART_ETX) && (uart_rx_status == UART_RECIEVED_ID))
+    {
+        uart_rx_status = UART_RECIEVE_IDLE;
+    }
+    else
+    {
+        // there has been an issue in  UART, reset to idle
+        uart_rx_status = UART_RECIEVE_IDLE;
+    }
+}
+
+static void uart_put_coded_val(uint8_t val)
+{
+    if (val < 10)
+    {
+        app_uart_put(0x30 + val); //send the ascii value of the number (0-9)
+    }
+    else
+    {
+        app_uart_put(0x41 + val - 10); //send the ascii value of the number (A-F)
+    }
+}
+
+static void tx_temp_byte(uint8_t byte)
+{
+    if (latest_temp[byte/2].id == (byte/2))
+    {
+        if (byte % 2)
+        {
+            uint8_t lower = latest_temp[byte/2].temp & 0x0F;
+            uart_put_coded_val(lower);
+        }
+        else
+        {
+            uint8_t upper = (latest_temp[byte/2].temp & 0xF0) >> 4;
+            uart_put_coded_val(upper);
+        }
+    }
+    else
+    {
+        // sending FF indicates no connection
+        app_uart_put(0x46);
+    }
+}
+
+static void uart_tx_empty_handler(void)
+{
+    //uart_tx_status = UART_TX_IDLE;
+    static uint8_t i = 0;
+            
+    if (i < 20)
+    {
+        tx_temp_byte(i);
+        i++;
+    }
+    else if (i == 20)
+    {
+        app_uart_put(UART_ETX);
+        i++;
+    }
+    else
+    {
+        i=0;
+    }
+}
+
+static void uart_evt_handler(app_uart_evt_t * p_app_uart_event)
+{
+    switch (p_app_uart_event->evt_type)
+    {
+        case APP_UART_DATA_READY:
+        {
+            uart_data_rx_handler();
+        } break;
+        case APP_UART_FIFO_ERROR:
+        {
+            
+        } break;
+        case APP_UART_COMMUNICATION_ERROR:
+        {
+            
+        } break;
+        case APP_UART_TX_EMPTY:
+        {
+            uart_tx_empty_handler();
+        } break;
+        case APP_UART_DATA:
+        {
+            
+        } break;
+    }
+}
+
+static void uart_tx_timeout_handler(void * p_context)
+{
+    static bool on = true;
+    if (on)
+    {
+        indicate_led_off();
+        on = false;
+    }
+    else
+    {
+        indicate_led_on();
+        on = true;
+    }
+    app_uart_put(UART_STX);
+    /*    uint8_t data_send[] = {UART_STX, 0x32, 0x30, 0x32, 0x33, 0x34, 0x35, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, UART_ETX};
+
+    UNUSED_PARAMETER(p_context);
+        for (uint8_t i = 0; i < 22; i++)
+        {
+            app_uart_put(data_send[i]);
+        }*/
+//    uart_tx_temps();
+}
 
 /**@brief Function for handling BLE Stack events concerning central applications.
  *
@@ -1020,12 +1179,6 @@ void connections_log_init(void)
     }    
 }
 
-void indicate_dev(uint8_t dev)
-{
-    m_ble_rsc_c.conn_handle = m_conn_handle_c[dev];
-    ble_rscs_c_rsc_notif_enable(&m_ble_rsc_c);
-}
-
 bool debug_trigger(void)
 {
     if (NRF_GPIO->IN & DEBUG_PIN_MASK)
@@ -1038,6 +1191,29 @@ bool debug_trigger(void)
     }
 }
 
+void uart_init(void)
+{
+    uint32_t err_code;
+    const app_uart_comm_params_t comm_params =
+      {
+          10,
+          9,
+          RTS_PIN_NUMBER,
+          RTS_PIN_NUMBER,
+          APP_UART_FLOW_CONTROL_DISABLED,
+          false,
+          UART_BAUDRATE_BAUDRATE_Baud9600
+      };
+
+    APP_UART_FIFO_INIT(&comm_params,
+                         UART_RX_BUF_SIZE,
+                         UART_TX_BUF_SIZE,
+                         uart_evt_handler,
+                         APP_IRQ_PRIORITY_LOW,
+                         err_code);
+    APP_ERROR_CHECK(err_code);
+}
+#include "nrf_delay.h"
 /** @brief Function to sleep until a BLE event is received by the application.
  */
 static void power_manage(void)
@@ -1062,11 +1238,21 @@ int main(void)
     //NRF_LOG_PRINTF("Relay Example\r\n");
 
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, NULL);
-    buttons_leds_init(&erase_bonds);
-    connections_log_init();
+    // Create uart timer
+    err_code = app_timer_create(&m_uart_tx_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                uart_tx_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+    
+    err_code = app_timer_start(m_uart_tx_timer_id, UART_TX_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
+    
+    //buttons_leds_init(&erase_bonds);
+//    connections_log_init();
     indicate_led_init();
     indicate_led_on();
     debug_pin_init();
+    uart_init();
     if (erase_bonds == true)
     {
         //NRF_LOG("Bonds erased!\r\n");
@@ -1089,14 +1275,16 @@ int main(void)
     scan_start();
 
     // Turn on the LED to signal scanning.
-    LEDS_ON(CENTRAL_SCANNING_LED);
+    //LEDS_ON(CENTRAL_SCANNING_LED);
 
     // Start advertising.
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
-
+    app_uart_put(0);
     for (;;)
     {
+        //uart_tx_temps();
+        //nrf_delay_ms(10);
         // Wait for BLE events.
         power_manage();
     }
