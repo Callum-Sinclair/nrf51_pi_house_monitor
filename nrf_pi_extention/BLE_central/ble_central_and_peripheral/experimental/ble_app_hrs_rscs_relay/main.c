@@ -178,8 +178,6 @@ static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUI
 #define UART_STX 2 //packet_start
 #define UART_ETX 3 //packet_end
 static uint8_t uart_rx_status   = UART_RECIEVE_IDLE;
-static uint8_t uart_tx_status   = UART_TX_IDLE;
-
 
 /* Tempartature logging, readying for UART */
 /**@brief Structure containing the Temparature measurement received from the peer
@@ -192,7 +190,7 @@ typedef struct
     bool     posative;  //is_running;                             /**< True if running, False if walking. */
     uint16_t temp;      //inst_speed;                             /**< Instantaneous Speed. */
     uint8_t  id;        //inst_cadence;                           /**< Instantaneous Cadence. */
-    //uint16_t inst_stride_length;                     /**< Instantaneous Stride Length. */
+    uint16_t conn_hand; //uint16_t inst_stride_length;                     /**< Instantaneous Stride Length. */
     //uint32_t total_distance;                         /**< Total Distance. */
 } temp_t;
 
@@ -201,6 +199,7 @@ typedef struct
 #define TEMP_POS    is_running
 
 temp_t latest_temp[10];
+static uint8_t indicate = 0xff;
 
 // Pin used to trigger debug events
 #define DEBUG_PIN         8
@@ -236,7 +235,7 @@ void indicate_led_off(void)
 // Function to request that thermometer "dev" turns on its led
 void indicate_dev(uint8_t dev)
 {
-    m_ble_rsc_c.conn_handle = m_conn_handle_c[dev];
+    m_ble_rsc_c.conn_handle = latest_temp[dev].conn_hand;
     ble_rscs_c_rsc_notif_enable(&m_ble_rsc_c);
 }
 
@@ -443,6 +442,7 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
             latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].id        = p_rscs_c_evt->params.rsc.TEMP_ID;
             latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].posative  = p_rscs_c_evt->params.rsc.TEMP_POS;
             latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].temp      = p_rscs_c_evt->params.rsc.TEMP_TEMP;
+            latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].conn_hand = p_rscs_c->conn_handle;
             
             rscs_measurment.is_running                  = true;
             rscs_measurment.is_inst_stride_len_present  = false;
@@ -454,6 +454,7 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
             rscs_measurment.total_distance     = latest_temp[2].temp;
 
             err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurment);
+            
             if ((err_code != NRF_SUCCESS) &&
                 (err_code != NRF_ERROR_INVALID_STATE) &&
                 (err_code != BLE_ERROR_NO_TX_PACKETS) &&
@@ -471,19 +472,17 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
 }
 
 
-static void uart_data_rx_handler(void)
+static void uart_data_rx_handler(uint8_t rx_ch)
 {
-    uint8_t rx_ch           = 0;
     char    id_ch           = 0;
     uint8_t id_num          = 99;
 
-    app_uart_get(&rx_ch);
     
-    if ((rx_ch == UART_STX) && (uart_rx_status == UART_RECIEVE_IDLE))
+    /*if ((rx_ch == UART_STX) && (uart_rx_status == UART_RECIEVE_IDLE))
     {
         uart_rx_status = UART_RECIEVED_STX;
-    }
-    else if ((rx_ch == '0') && (uart_rx_status == UART_RECIEVED_STX))
+    }*/
+    if ((rx_ch == '0') && (uart_rx_status == UART_RECIEVE_IDLE))
     {
         uart_rx_status = UART_RECIEVED_0;
     }
@@ -491,27 +490,19 @@ static void uart_data_rx_handler(void)
     {
         //indicate thermometer stated
         id_ch = rx_ch;
-        id_num = id_ch - 48;
-        indicate_dev(id_num);
-        if (id_num % 2)
-        {
-            indicate_led_on();
-        }
-        else
-        {
-            indicate_led_off();
-        }
-        uart_rx_status = UART_RECIEVED_ID;
-    }
-    else if ((rx_ch == UART_ETX) && (uart_rx_status == UART_RECIEVED_ID))
-    {
+        id_num = id_ch - 0x30;
+        indicate = id_num;
         uart_rx_status = UART_RECIEVE_IDLE;
     }
-    else
+    /*else if ((rx_ch == UART_ETX) && (uart_rx_status == UART_RECIEVED_ID))
+    {
+        uart_rx_status = UART_RECIEVE_IDLE;
+    }*/
+    /*else
     {
         // there has been an issue in  UART, reset to idle
         uart_rx_status = UART_RECIEVE_IDLE;
-    }
+    }*/
 }
 
 static void uart_put_coded_val(uint8_t val)
@@ -575,7 +566,7 @@ static void uart_evt_handler(app_uart_evt_t * p_app_uart_event)
     {
         case APP_UART_DATA_READY:
         {
-            uart_data_rx_handler();
+            
         } break;
         case APP_UART_FIFO_ERROR:
         {
@@ -591,7 +582,7 @@ static void uart_evt_handler(app_uart_evt_t * p_app_uart_event)
         } break;
         case APP_UART_DATA:
         {
-            
+            uart_data_rx_handler(p_app_uart_event->data.value);
         } break;
     }
 }
@@ -610,14 +601,6 @@ static void uart_tx_timeout_handler(void * p_context)
         on = true;
     }
     app_uart_put(UART_STX);
-    /*    uint8_t data_send[] = {UART_STX, 0x32, 0x30, 0x32, 0x33, 0x34, 0x35, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, UART_ETX};
-
-    UNUSED_PARAMETER(p_context);
-        for (uint8_t i = 0; i < 22; i++)
-        {
-            app_uart_put(data_send[i]);
-        }*/
-//    uart_tx_temps();
 }
 
 /**@brief Function for handling BLE Stack events concerning central applications.
@@ -675,27 +658,13 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 APP_ERROR_CHECK(err_code);
             }
 
-            /** Update LEDs status, and check if we should be looking for more
-             *  peripherals to connect to. */
-            LEDS_ON(CENTRAL_CONNECTED_LED);
-            if (ble_conn_state_n_centrals() == CENTRAL_LINK_COUNT)
-            {
-                LEDS_OFF(CENTRAL_SCANNING_LED);
-            }
-            else
-            {
-                // Resume scanning.
-                LEDS_ON(CENTRAL_SCANNING_LED);
-                scan_start();
-            }
+            scan_start();
         } break; // BLE_GAP_EVT_CONNECTED
 
         /** Upon disconnection, reset the connection handle of the peer which disconnected, update
          * the LEDs status and start scanning again. */
         case BLE_GAP_EVT_DISCONNECTED:
-        {
-            uint8_t n_centrals;
-            
+        {            
             for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
             {
                 if(p_gap_evt->conn_handle == m_conn_handle_c[i])
@@ -711,14 +680,6 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 
             // Start scanning
             // scan_start();
-
-            // Update LEDs status.
-            LEDS_ON(CENTRAL_SCANNING_LED);
-            n_centrals = ble_conn_state_n_centrals();
-            if (n_centrals == 0)
-            {
-                LEDS_OFF(CENTRAL_CONNECTED_LED);
-            }
         } break; // BLE_GAP_EVT_DISCONNECTED
 
         case BLE_GAP_EVT_ADV_REPORT:
@@ -1031,27 +992,6 @@ static void peer_manager_init(bool erase_bonds)
 }
 
 
-/**@brief Function for initializing buttons and leds.
- *
- * @param[out] p_erase_bonds  Will be true if the clear bonding button was pressed to
- *                            wake the application up.
- */
-static void buttons_leds_init(bool * p_erase_bonds)
-{
-    bsp_event_t startup_event;
-
-    ret_code_t err_code = bsp_init(BSP_INIT_LED | BSP_INIT_BUTTONS,
-                                 APP_TIMER_TICKS(100, APP_TIMER_PRESCALER),
-                                 NULL);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = bsp_btn_ble_init(NULL, &startup_event);
-    APP_ERROR_CHECK(err_code);
-
-    *p_erase_bonds = (startup_event == BSP_EVENT_CLEAR_BONDING_DATA);
-}
-
-
 /**@brief Function for the GAP initialization.
  *
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
@@ -1213,16 +1153,25 @@ void uart_init(void)
                          err_code);
     APP_ERROR_CHECK(err_code);
 }
-#include "nrf_delay.h"
+
+void temp_array_init(void)
+{
+    for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
+    {
+        latest_temp[i].id = 0xff;
+        latest_temp[i].conn_hand = BLE_CONN_HANDLE_INVALID;
+    }
+}
 /** @brief Function to sleep until a BLE event is received by the application.
  */
 static void power_manage(void)
 {
     ret_code_t err_code = sd_app_evt_wait();
     APP_ERROR_CHECK(err_code);
-    if (debug_trigger())
+    if (indicate < 10)
     {
-        indicate_dev(0);
+        indicate_dev(indicate);
+        indicate = 0xff;
     }
 }
 
@@ -1247,16 +1196,12 @@ int main(void)
     err_code = app_timer_start(m_uart_tx_timer_id, UART_TX_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
     
-    //buttons_leds_init(&erase_bonds);
-//    connections_log_init();
+    connections_log_init();
     indicate_led_init();
     indicate_led_on();
     debug_pin_init();
+    temp_array_init();
     uart_init();
-    if (erase_bonds == true)
-    {
-        //NRF_LOG("Bonds erased!\r\n");
-    }
 
     ble_stack_init();
 
@@ -1274,8 +1219,6 @@ int main(void)
      *  advertise Heart Rate or Running speed and cadence UUIDs. */
     scan_start();
 
-    // Turn on the LED to signal scanning.
-    //LEDS_ON(CENTRAL_SCANNING_LED);
 
     // Start advertising.
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
