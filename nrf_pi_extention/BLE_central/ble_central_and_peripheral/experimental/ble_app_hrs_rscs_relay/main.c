@@ -185,13 +185,10 @@ static uint8_t uart_rx_status   = UART_RECIEVE_IDLE;
  */
 typedef struct
 {
-    //bool     is_inst_stride_len_present;             /**< True if Instantaneous Stride Length is present in the measurement. */
-    //bool     is_total_distance_present;              /**< True if Total Distance is present in the measurement. */
-    bool     posative;  //is_running;                             /**< True if running, False if walking. */
-    uint16_t temp;      //inst_speed;                             /**< Instantaneous Speed. */
-    uint8_t  id;        //inst_cadence;                           /**< Instantaneous Cadence. */
-    uint16_t conn_hand; //uint16_t inst_stride_length;                     /**< Instantaneous Stride Length. */
-    //uint32_t total_distance;                         /**< Total Distance. */
+    bool     posative;  //(no longer used) whether the temparatuer is positive or negative
+    uint16_t temp;      // the temparature detected + 70'C (to avoid signed numbers)
+    uint8_t  id;        // the device ID
+    uint16_t conn_hand; // the device BLE connection handle
 } temp_t;
 
 #define TEMP_ID     inst_cadence
@@ -325,10 +322,7 @@ static void scan_start(void)
  */
 static void fds_evt_handler(fds_evt_t const * const p_evt)
 {
-    if (p_evt->id == FDS_EVT_GC)
-    {
-        //NRF_LOG_PRINTF("GC completed\n");
-    }
+    
 }
 
 
@@ -346,11 +340,8 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
             break;
 
         case PM_EVT_LINK_SECURED:
-            //NRF_LOG_PRINTF("Link secured. Role: %d. conn_handle: %d, Procedure: %d\r\n",
-              //             ble_conn_state_role(p_evt->conn_handle),
-              //             p_evt->conn_handle,
-              //             p_evt->params.link_secured_evt.procedure);
-            break;
+
+        break;
 
         case PM_EVT_LINK_SECURE_FAILED:
             /** In some cases, when securing fails, it can be restarted directly. Sometimes it can
@@ -419,8 +410,6 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
         {
             ret_code_t err_code;
 
-            //NRF_LOG_PRINTF("Running Speed and Cadence service discovered\r\n");
-
             // Initiate bonding.
             err_code = pm_link_secure(p_rscs_c->conn_handle, false);
             if (err_code != NRF_ERROR_INVALID_STATE)
@@ -437,13 +426,14 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
         {
             uint32_t        err_code;
             ble_rscs_meas_t rscs_measurment;
-
-           // NRF_LOG_PRINTF("Speed      = %d\r\n", p_rscs_c_evt->params.rsc.inst_speed);
+            
+            // Store new data
             latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].id        = p_rscs_c_evt->params.rsc.TEMP_ID;
             latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].posative  = p_rscs_c_evt->params.rsc.TEMP_POS;
             latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].temp      = p_rscs_c_evt->params.rsc.TEMP_TEMP;
             latest_temp[p_rscs_c_evt->params.rsc.TEMP_ID].conn_hand = p_rscs_c->conn_handle;
             
+            // forward latest data from device 0, 1 & 2
             rscs_measurment.is_running                  = true;
             rscs_measurment.is_inst_stride_len_present  = false;
             rscs_measurment.is_total_distance_present   = false;
@@ -539,9 +529,10 @@ static void tx_temp_byte(uint8_t byte)
     }
 }
 
+// handler for when the UART Tx Buffer is empty
+// transmits the rest of the message, then stops
 static void uart_tx_empty_handler(void)
 {
-    //uart_tx_status = UART_TX_IDLE;
     static uint8_t i = 0;
             
     if (i < 20)
@@ -560,13 +551,14 @@ static void uart_tx_empty_handler(void)
     }
 }
 
+// handler for UART events
 static void uart_evt_handler(app_uart_evt_t * p_app_uart_event)
 {
     switch (p_app_uart_event->evt_type)
     {
         case APP_UART_DATA_READY:
         {
-            
+            // in this setup data is avaialbe to be used when the case is APP_UART_DATA
         } break;
         case APP_UART_FIFO_ERROR:
         {
@@ -639,11 +631,10 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
              *  upon completion, which is used to enable notifications from the peer. */
             if(memcmp(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t)) == 0)
             {
-                //NRF_LOG_PRINTF("RSC central connected\r\n");
                 // Reset the peer address we had saved.
                 memset(&periph_addr_rsc, 0, sizeof(ble_gap_addr_t));
                 
-                //find first unused connection
+                //find first unused connection, log that connection
                 for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
                 {
                     if (!dev_connected[i])
@@ -653,7 +644,6 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                         i = NUM_TEMP_DEVS + 1; //break out of for loop as have got correct value
                     }
                 }
-                //NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
             }
@@ -669,17 +659,11 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
             {
                 if(p_gap_evt->conn_handle == m_conn_handle_c[i])
                 {
-                    //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
-                     //      p_gap_evt->params.disconnected.reason);
-
                     m_conn_handle_c[i] = BLE_CONN_HANDLE_INVALID;
                     dev_connected[i] = false;
                     i = NUM_TEMP_DEVS + 1; //break out of for loop
                 }
             }
-
-            // Start scanning
-            // scan_start();
         } break; // BLE_GAP_EVT_DISCONNECTED
 
         case BLE_GAP_EVT_ADV_REPORT:
@@ -739,7 +723,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                     err_code = sd_ble_gap_connect(peer_addr, &m_scan_param, &m_connection_param);
                     if (err_code != NRF_SUCCESS)
                     {
-                        //APPL_LOG("[APPL]: Connection Request Failed, reason %d\r\n", err_code);
+
                     }
                 }
             }
@@ -780,14 +764,9 @@ static void on_ble_peripheral_evt(ble_evt_t * p_ble_evt)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
-            //NRF_LOG_PRINTF("Peripheral connected\r\n");
-            LEDS_OFF(PERIPHERAL_ADVERTISING_LED);
-            LEDS_ON(PERIPHERAL_CONNECTED_LED);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
-            //NRF_LOG_PRINTF("Peripheral disconnected\r\n");
-            LEDS_OFF(PERIPHERAL_CONNECTED_LED);
             break;
 
         default:
@@ -806,7 +785,6 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     switch (ble_adv_evt)
     {
         case BLE_ADV_EVT_FAST:
-            LEDS_ON(PERIPHERAL_ADVERTISING_LED);
             break;
 
         case BLE_ADV_EVT_IDLE:
@@ -865,7 +843,7 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
         {
             on_ble_central_evt(p_ble_evt);
         }
-
+        
         for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
         {
             if (conn_handle == m_conn_handle_c[i])
@@ -1119,6 +1097,7 @@ void connections_log_init(void)
     }    
 }
 
+// used to read an input pin, used in debuggin
 bool debug_trigger(void)
 {
     if (NRF_GPIO->IN & DEBUG_PIN_MASK)
@@ -1131,6 +1110,7 @@ bool debug_trigger(void)
     }
 }
 
+// initiallise the UART module
 void uart_init(void)
 {
     uint32_t err_code;
@@ -1154,6 +1134,7 @@ void uart_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+// populate the temparature data array with nul values
 void temp_array_init(void)
 {
     for (uint8_t i = 0; i < NUM_TEMP_DEVS; i++)
@@ -1180,11 +1161,6 @@ int main(void)
 {
     ret_code_t err_code;
     bool       erase_bonds;
-
-    //err_code = NRF_LOG_INIT();
-    //APP_ERROR_CHECK(err_code);
-
-    //NRF_LOG_PRINTF("Relay Example\r\n");
 
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, NULL);
     // Create uart timer
@@ -1226,8 +1202,6 @@ int main(void)
     app_uart_put(0);
     for (;;)
     {
-        //uart_tx_temps();
-        //nrf_delay_ms(10);
         // Wait for BLE events.
         power_manage();
     }
