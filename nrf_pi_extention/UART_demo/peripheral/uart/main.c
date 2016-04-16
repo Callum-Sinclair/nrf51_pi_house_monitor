@@ -122,10 +122,10 @@ int main(void)
 
     while (true)
     {
-        /*// wait for indicate (i) or request data (r) command
+        // wait for indicate (i) or request data (r) command
         while((app_uart_get(&rx_ch) != NRF_SUCCESS));
-
-        if ((rx_ch == STX) && (status == RECIEVE_IDLE))
+                indicate_led_off();
+/*        if ((rx_ch == STX) && (status == RECIEVE_IDLE))
         {
             status = RECIEVED_STX;
         }
@@ -157,13 +157,13 @@ int main(void)
         {
             // there has been an issue in  UART, reset to idle
             status = RECIEVE_IDLE;
-        }*/
-        for (uint8_t i = 0; i < 22; i++)
+        }
+        /*for (uint8_t i = 0; i < 22; i++)
         {
             while(app_uart_put(data_send[i]) != NRF_SUCCESS);
         }
         
-        nrf_delay_ms(1000);
+        nrf_delay_ms(1000);*/
     }
 }
 
