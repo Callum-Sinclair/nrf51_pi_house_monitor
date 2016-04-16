@@ -34,17 +34,17 @@ The GUI has the following features:
 * table_model.py - contains the realisation of Model for the TableView widget
 As the serial communication in itself does not provide a mechanism to handle bundled information together, interpreting a message which is made out of more than 1 character requires packetisation. For this purpose the following structure for packet was implemented:
 
-```[STX,value0_upper_char,value0_lower_char,value1_upper_char,value1_lower_char,...,value9_upper_char,value9_lower_char,ETX]
+``` [STX,value0_upper_char,value0_lower_char,value1_upper_char,value1_lower_char,...,value9_upper_char,value9_lower_char,ETX]
 ```
 where the ACII character 'STX' marks the beginning of the packet and the ACII character 'ETX' signals the end of the packet. The 1 byte temperature value (0-255) is encoded such that the binary value is turned into a hex one (omitting the 0x part) and the ASCII characters which make up the hex value are sent through the serial line, most significant char first. The negative temperatures are represented by mapping the temperature 0 degrees to the integer value 70 and if the sensor is not connected to the hub or the connection between the hub and the beacon is lost then the value 255 is sent. This way a constant size (22 bytes) packet is sent and received between the hub and the Raspberry Pi. The decoding on the Pi side is realised via a state machine which searches for the beginning of the packet and saves the message part until the end of the packet is found. Then the message is decoded from the string hex value into an integer one and processed. For example, if the sensor reads a temperature of -10 degree celsius, then the value 60 (70 -10) decimal is needed to be transmitted such that:
 
-```60(decimal) = 0011 1100(binary) = 3C(hex) --> ACII characters '3' and 'C' will be transmitted to the Pi inside the packet
+``` 60(decimal) = 0011 1100(binary) = 3C(hex) --> ACII characters '3' and 'C' will be transmitted to the Pi inside the packet
 ```
 Furthermore, due to the asynchronous nature of the serial connection, a ring buffer is implemented into which the background thread saves incoming packets of data and the main thread loads and separates the data into separate data streams for each sensor in order to plot them. Its size is initialized in the resources.py file (buffer_size) to store 200 packets before looping back to its its beginning.
 
 There is also communication from the Pi towards the hub and that is in order to make the beacons identifiable. By selecting a sensor row in the table and clicking on the "Detect Sensor" button, the python app sends a request packet to the hub with the id number of the sensor selected to blink its LED. The packet for this is made up as follows:
 
-```[STX,'VALUE',ETX]
+``` [STX,'VALUE',ETX]
 ```
 where 'VALUE' is the ACII character from 0-9 depending on which sensor in the table was selected.
 
