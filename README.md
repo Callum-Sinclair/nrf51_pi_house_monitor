@@ -24,18 +24,18 @@ The project work was split such that Tamas wrote the Raspberry Pi software and c
 * Python-serial package and its dependencies
 * Python-Qt4 package and its dependencies
 * PyQtGraph package and its dependencies (numpy, scipy..)
-* BLE Central Device
 
-### RedBearLab BLE Nano module, featuring Nordic Semiconductor nRF51822 Bluetooth SoC with ARM Cortex-M0 core
+### BLE Central Device
+* RedBearLab BLE Nano module, featuring Nordic Semiconductor nRF51822 Bluetooth SoC with ARM Cortex-M0 core
 * UART connection to Raspberry Pi (GPIO 14 & 15)
 * 1 GPIO connection to Raspberry Pi (GPIO 18)
 * Red status LED
 * Powered by 5 V output from Rasperry Pi
 * Header connects to pins 2, 4, 6, 8, 10 & 12 of Rasperry Pi GPIO header
 * SWD programming pins available for firmware update
-* BLE Thermometer
 
-### RedBearLab BLE Nano module, featuring Nordic Semiconductor nRF51822 Bluetooth SoC with ARM Cortex-M0 core
+### BLE Thermemeter
+* RedBearLab BLE Nano module, featuring Nordic Semiconductor nRF51822 Bluetooth SoC with ARM Cortex-M0 core
 * Thermistor temperature sensing circuit connected to nRF51822's ADC
 * Red status LED
 * Powered by 2 x AAA batteris
