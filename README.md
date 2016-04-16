@@ -8,7 +8,7 @@ The system is in three basic parts:
 
 This project is being completed in connection with a final year module in my
 Electronics and Electrical Engineering MEng degree at the University of Glasgow.
-This project is to be completed by June 2016 and is joint work with Tamas Lukacs and myself.
+This project was to be completed by 18/04/16 and is joint work with Tamas Lukacs and myself.
 
 ## Overview
 
