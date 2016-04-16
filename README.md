@@ -6,7 +6,7 @@ The system is in three basic parts:
 - Code for the temparature sensing modules (running on nRF51 chips)
 - Code running on an nRF51 chip to communicate with the Pi (via SPI) and each temparature sensing module
 
-This project is being completed in connection with a final year module in my
+This project was undertaken in connection with a final year module in my
 Electronics and Electrical Engineering MEng degree at the University of Glasgow.
 This project was to be completed by 18/04/16 and is joint work with Tamas Lukacs and myself.
 
