@@ -68,19 +68,6 @@
 
 #define SPEED_AND_CADENCE_MEAS_INTERVAL 1000                                        /**< Speed and cadence measurement interval (milliseconds). */
 
-#define MIN_SPEED_MPS                   0.5                                         /**< Minimum speed in meters per second for use in the simulated measurement function. */
-#define MAX_SPEED_MPS                   6.5                                         /**< Maximum speed in meters per second for use in the simulated measurement function. */
-#define SPEED_MPS_INCREMENT             1.5                                         /**< Value by which speed is incremented/decremented for each call to the simulated measurement function. */
-#define MIN_RUNNING_SPEED               3                                           /**< speed threshold to set the running bit. */
-
-#define MIN_CADENCE_RPM                 40                                          /**< Minimum cadence in revolutions per minute for use in the simulated measurement function. */
-#define MAX_CADENCE_RPM                 160                                         /**< Maximum cadence in revolutions per minute for use in the simulated measurement function. */
-#define CADENCE_RPM_INCREMENT           20                                          /**< Value by which cadence is incremented/decremented in the simulated measurement function. */
-
-#define MIN_STRIDE_LENGTH               20                                          /**< Minimum stride length in decimeter for use in the simulated measurement function. */
-#define MAX_STRIDE_LENGTH               125                                         /**< Maximum stride length in decimeter for use in the simulated measurement function. */
-#define STRIDE_LENGTH_INCREMENT         5                                           /**< Value by which stride length is incremented/decremented in the simulated measurement function. */
-
 #define MIN_CONN_INTERVAL               MSEC_TO_UNITS(500, UNIT_1_25_MS)            /**< Minimum acceptable connection interval (0.5 seconds). */
 #define MAX_CONN_INTERVAL               MSEC_TO_UNITS(1000, UNIT_1_25_MS)           /**< Maximum acceptable connection interval (1 second). */
 #define SLAVE_LATENCY                   0                                           /**< Slave latency. */
@@ -118,13 +105,6 @@ static ble_rscs_t                       m_rscs;                                 
 static sensorsim_cfg_t                  m_battery_sim_cfg;                         /**< Battery Level sensor simulator configuration. */
 static sensorsim_state_t                m_battery_sim_state;                       /**< Battery Level sensor simulator state. */
 
-static sensorsim_cfg_t                  m_speed_mps_sim_cfg;                       /**< Speed simulator configuration. */
-static sensorsim_state_t                m_speed_mps_sim_state;                     /**< Speed simulator state. */
-static sensorsim_cfg_t                  m_cadence_rpm_sim_cfg;                     /**< Cadence simulator configuration. */
-static sensorsim_state_t                m_cadence_rpm_sim_state;                   /**< Cadence simulator state. */
-static sensorsim_cfg_t                  m_cadence_stl_sim_cfg;                     /**< stride length simulator configuration. */
-static sensorsim_state_t                m_cadence_stl_sim_state;                   /**< stride length simulator state. */
-
 APP_TIMER_DEF(m_battery_timer_id);                                                 /**< Battery timer. */
 APP_TIMER_DEF(m_rsc_meas_timer_id);                                                /**< RSC measurement timer. */
 static dm_application_instance_t        m_app_handle;                              /**< Application identifier allocated by device manager. */
@@ -133,7 +113,7 @@ static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUI
                                    {BLE_UUID_BATTERY_SERVICE,            BLE_UUID_TYPE_BLE},
                                    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
-
+// temparature[n] gives the temparature for an ADC reading of "n", calculated from excel spredsheet with data from thermistor manufaturer
 const int8_t temparature[] = {-50, -44, -38, -35, -31, -29, -26, -24, -22, -21, -19, -17, -16, -15, -14, -12, -11, -10, -9, -8, -8, -7, -6, -5, -4, -4, -3, -2, -1, -1, 0, 0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 10, 11, 11, 12, 12, 12, 13, 13, 13, 14, 14, 15, 15, 15, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 22, 22, 22, 23, 23, 23, 23, 24, 24, 24, 24, 24, 25, 25, 25, 25, 26, 26, 26, 26, 27, 27, 27, 27, 27, 28, 28, 28, 28, 29, 29, 29, 29, 29, 30, 30, 30, 30, 30, 31, 31, 31, 31, 31, 31, 32, 32, 32, 32, 32, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 34, 35, 35, 35, 35, 35, 35, 36, 36, 36, 36, 36, 36, 37, 37, 37, 37, 37, 37, 37, 38, 38, 38, 38, 38, 38, 39, 39, 39, 39, 39, 39, 39, 40, 40, 40, 40, 40, 40, 40, 41, 41, 41, 41, 41, 41, 41, 42, 42, 42, 42, 42, 42, 42, 43, 43, 43, 43, 43, 43, 43, 43, 44, 44, 44, 44, 44, 44, 44, 45, 45, 45, 45, 45, 45, 45, 45, 46, 46, 46, 46, 46, 46, 46, 46, 46, 47, 47, 47, 47, 47, 47, 47, 47, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49,
 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 50, 50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 61, 61, 61, 61, 61, 61, 61, 61, 61, 61, 61, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 62, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70,
 70, 70, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 75, 75, 75, 75, 75, 75, 75, 75, 75, 75, 75, 75, 75, 75, 75, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 86, 86, 86, 86, 86, 86, 86,
@@ -278,9 +258,9 @@ int8_t temp_measure(void)
 
 
 
-/**@brief Function for populating simulated running speed and cadence measurement.
+/**@brief Function for populating running speed and cadence measurement type with temparature data.
  */
-static void rsc_sim_measurement(ble_rscs_meas_t * p_measurement)
+static void adc_to_rcs_measurement(ble_rscs_meas_t * p_measurement)
 {
     p_measurement->is_inst_stride_len_present = false;
     p_measurement->is_total_distance_present  = false;
@@ -309,7 +289,7 @@ static void rsc_meas_timeout_handler(void * p_context)
 
     UNUSED_PARAMETER(p_context);
 
-    rsc_sim_measurement(&rscs_measurement);
+    adc_to_rcs_measurement(&rscs_measurement);
 
     err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
     if (
@@ -461,28 +441,6 @@ static void sensor_simulator_init(void)
     m_battery_sim_cfg.start_at_max = true;
 
     sensorsim_init(&m_battery_sim_state, &m_battery_sim_cfg);
-
-    // speed is in units of meters per second divided by 256
-    m_speed_mps_sim_cfg.min          = (uint32_t)(MIN_SPEED_MPS * 256);
-    m_speed_mps_sim_cfg.max          = (uint32_t)(MAX_SPEED_MPS * 256);
-    m_speed_mps_sim_cfg.incr         = (uint32_t)(SPEED_MPS_INCREMENT * 256);
-    m_speed_mps_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_speed_mps_sim_state, &m_speed_mps_sim_cfg);
-
-    m_cadence_rpm_sim_cfg.min          = MIN_CADENCE_RPM;
-    m_cadence_rpm_sim_cfg.max          = MAX_CADENCE_RPM;
-    m_cadence_rpm_sim_cfg.incr         = CADENCE_RPM_INCREMENT;
-    m_cadence_rpm_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_cadence_rpm_sim_state, &m_cadence_rpm_sim_cfg);
-
-    m_cadence_stl_sim_cfg.min          = MIN_STRIDE_LENGTH;
-    m_cadence_stl_sim_cfg.max          = MAX_STRIDE_LENGTH;
-    m_cadence_stl_sim_cfg.incr         = STRIDE_LENGTH_INCREMENT;
-    m_cadence_stl_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_cadence_stl_sim_state, &m_cadence_stl_sim_cfg);
 }
 
 
@@ -604,6 +562,8 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 
 
 /**@brief Function for handling the Application's BLE Stack events.
+ *
+ *        This is used to illuminate the LED on pairing, or Central device request
  *
  * @param[in] p_ble_evt  Bluetooth stack event.
  */
